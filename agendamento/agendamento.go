@@ -15,4 +15,5 @@ type Agendamento struct {
 	Confirmado      bool
 	MeioPagamento   string
 	Pago            bool
+	Cancelado       bool
 }

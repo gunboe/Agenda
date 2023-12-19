@@ -15,10 +15,23 @@ func main() {
 	var dur, _ = time.ParseDuration("1h")
 	var planoAlfa = planosaude.PlanoSaude{Plano: "CASSI", NrPlano: "1234-5", DataValidade: d1}
 	var pacienteA = paciente.Paciente{Nome: "Gabriel Araujo", CPF: "123456789-00", NrCelular: 8199998888, Email: "biel@net.io", Endereco: "Av. Cons Rosa", PlanoSaude: planoAlfa}
+	err := pacienteA.SetSecret("SEGREDOBIEL")
+	if err != nil {
+		fmt.Println("Erro: ", err)
+	}
 	var agenteExec = agente.Agente{Nome: "Dr. Zebalos", CPF: "12345679-01", NrCelular: 8199997777, Especialidades: []string{"Ortopedista", "Cirurgião"}}
-	var agendaBiel = agendamento.Agendamento{DataInicio: d2, Duracao: dur, Atividade: "Consulta padrão", AgenteExecutor: agenteExec, PacienteAtender: pacienteA, Confirmado: true, MeioPagamento: "Dinheiro", Pago: false}
+	var agendaBiel = agendamento.Agendamento{DataInicio: d2, Duracao: dur, Atividade: "Consulta padrão", AgenteExecutor: agenteExec, PacienteAtender: pacienteA, Confirmado: true, MeioPagamento: "Dinheiro", Pago: false, Cancelado: false}
 
-	// fmt.Println(pacienteA)
-	// fmt.Println(agenteExec)
 	fmt.Println(agendaBiel)
+	s, err := pacienteA.GetSecret()
+	if err != nil {
+		fmt.Println("Erro:", err)
+	} else {
+		fmt.Println(s)
+	}
+
+	var conf config
+	conf.carregaConfig("config.ini")
+	fmt.Println(conf)
+
 }

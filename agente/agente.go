@@ -5,4 +5,5 @@ type Agente struct {
 	CPF            string
 	NrCelular      int
 	Especialidades []string
+	secret         string
 }
