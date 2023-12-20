@@ -20,6 +20,7 @@ type config struct {
 	DuraInterval     time.Duration
 	DiasSemanaAtende []int
 	admSecret        string
+	Canais           []string
 }
 
 func (c *config) SetSecret(s string) error {
@@ -53,6 +54,7 @@ func (conf *config) carregaConfig(file string) {
 		fmt.Printf("Fail to read file: %v", err)
 		os.Exit(1)
 	}
+	// TODO: Tratar os erros abaixo
 	section := inidata.Section("config")
 	conf.NomeFantasia = section.Key("NomeFantasia").String()
 	conf.HoraInicioAtende, _ = time.ParseDuration(section.Key("HoraInicioAtende").String())
@@ -60,14 +62,18 @@ func (conf *config) carregaConfig(file string) {
 	conf.HoraFimAtende, _ = time.ParseDuration(section.Key("HoraFimAtende").String())
 	conf.HoraInterval, _ = time.ParseDuration(section.Key("HoraInterval").String())
 	conf.DuraInterval, _ = time.ParseDuration(section.Key("DuraInterval").String())
-	conf.DiasSemanaAtende, err = string2Int(section.Key("DiasSemanaAtende").String())
+	conf.DiasSemanaAtende, err = string2VetorInt(section.Key("DiasSemanaAtende").String())
 	if err != nil {
 		fmt.Println(err)
 	}
 	conf.admSecret = section.Key("admSecret").String()
+	conf.Canais, err = string2VetorString(section.Key("Canais").String())
+	if err != nil {
+		fmt.Println(err)
+	}
 }
 
-func string2Int(str string) ([]int, error) {
+func string2VetorInt(str string) ([]int, error) {
 	// Divide a string usando a função Split do pacote strings
 	strSlice := strings.Split(str, ",")
 	// Cria um slice para armazenar os inteiros
@@ -90,4 +96,18 @@ func string2Int(str string) ([]int, error) {
 		}
 	}
 	return intSlice, nil
+}
+
+func string2VetorString(str string) ([]string, error) {
+	// Divide a string usando a função Split do pacote strings
+	strSlice := strings.Split(str, ",")
+	// Cchecar os nomes reservados para os canis: "WAPP,EMAIL,VOZ,SMS,WEB"
+	// TODO: Esses canais devem ser uma lista configurada externamente com seus parametros
+	//       e não fixa no código abaixo
+	for _, s := range strSlice {
+		if s != "WAPP" && s != "EMAIL" && s != "VOZ" && s != "SMS" && s != "WEB" {
+			return nil, errors.New("Erro: Canal \"" + s + "\" inválido. Deve ser um dos tipos: WAPP,EMAIL,VOZ,SMS,WEB")
+		}
+	}
+	return strSlice, nil
 }
