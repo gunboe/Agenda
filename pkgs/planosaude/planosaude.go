@@ -37,25 +37,17 @@ func VerificarConvenio(c Convenios) error {
 }
 
 // Checar Planos em Convênios
-// func VerificarPlano(plano string, nr string, data time.Time, convenios []Convenios) (PlanoSaude, error) {
 func VerificarPlano(plano PlanoSaude) error {
-
-	// convenios, err := armazenamento.GetConvenios("*")
-	// if err != nil {
-	// 	return err
-	// }
-	// for _, conv := range convenios {
-	// if strings.EqualFold(conv.NomeConv, plano.Convenio.NomeConv) {
+	// Verifica os campos
 	if plano.Convenio.NomeConv == "" || plano.NrPlano == "" || plano.DataValidade.IsZero() {
 		return errors.New("Nome, Número ou Data de validade vazio.")
+		// Verifica a validado do Plano
 	} else if plano.DataValidade.Before(time.Now()) {
 		return errors.New("Data de validade, Plano de saude vencido.")
-		// } else if conv.DataContratoConv.Before(time.Now()) {
-		// 	return errors.New("Não possível usar o Plano. Contratro do Convênio: " + conv.NomeConv + " está vencido.")
+		// Verifica a validade do Contrato do Convênio
+	} else if plano.Convenio.DataContratoConv.Before(time.Now()) {
+		return errors.New("Não possível usar o Plano. Contratro do Convênio: " + plano.Convenio.NomeConv + " está vencido desde:" + plano.Convenio.DataContratoConv.Format("02/01/2006"))
 	} else {
 		return nil
 	}
-	// }
-	// }
-	// return errors.New("Plano não conveniado.")
 }

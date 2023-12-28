@@ -1,9 +1,9 @@
 package main
 
 import (
-	lib "Agenda/pkgs"
 	"Agenda/pkgs/agente"
 	"Agenda/pkgs/armazenamento"
+	"Agenda/pkgs/common"
 	"Agenda/pkgs/paciente"
 	"Agenda/pkgs/planosaude"
 
@@ -11,6 +11,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func main() {
@@ -19,22 +21,27 @@ func main() {
 	//
 
 	// Carregar as configurações
-	var conf lib.Config
-	conf = lib.ConfigInicial
+	var conf common.Config
+	conf = common.ConfigInicial
 	var err error
 	fmt.Println(conf.ArmazemDatabase)
-	armazenamento.IniciarArmazenamento()
 
+	// TESTES
 	// Inicialização de algumas variáveis pra teste da Estrutra de Dados
 	var d1, _ = time.Parse("02/01/2006", "22/06/2024")
-	// var d2, _ = time.Parse("02/01/2006", "01/01/2024")
+	var d2, _ = time.Parse("02/01/2006", "01/01/2025")
 	// var dur, _ = time.ParseDuration("1h")
 	conv, err := armazenamento.GetConvenios("*")
 	if err != nil {
 		fmt.Println("Erro:", err)
 	}
-	fmt.Println("Verificando plano...")
-	planoTeste := planosaude.PlanoSaude{Convenio: conv[1], NrPlano: "12345-0", DataValidade: d1}
+	convTeste := planosaude.Convenios{primitive.NewObjectID(), "Bradesco", "Rua Rosa e Silva, 1009", d2, true}
+	planoTeste := planosaude.PlanoSaude{Convenio: convTeste, NrPlano: "12345-0", DataValidade: d1}
+	var str string
+	for _, v := range conv {
+		str += " " + v.NomeConv
+	}
+	fmt.Println("Verificando o plano:", planoTeste.Convenio.NomeConv, "nos convenios:", str)
 	err = planosaude.VerificarPlano(planoTeste)
 	if err != nil {
 		fmt.Println("Erro:", err)
@@ -72,7 +79,7 @@ func main() {
 	// novoConv := planosaude.Convenios{Plano: nomeConv, Endereco: endConv, DataContratoConv: dataConv, Disponivel: false}
 	// novoConv := planosaude.Convenios{Plano: nomeConv, DataContratoConv: dataConv}
 
-	// gravaConvenio(conf, conv)
+	gravaConvenio(convTeste)
 
 	// Listar Convenios
 	// listaConvenio(conf, "*")
@@ -92,15 +99,16 @@ func main() {
 	// atualizaConv(conf, filtroNomeConv, novoConv, todos)
 }
 
-// Função para converter struct para Json
+// Converter struct para Json
 func printJSON(input interface{}) string {
 	s, _ := json.MarshalIndent(input, "", "\t")
 	return string(s)
 }
 
-func atualizaConv(conf lib.Config, nomeConv string, novoConv planosaude.Convenios, todos bool) {
+// CRUD Convenios
+// Atualiza convênio do armazém
+func atualizaConv(conf common.Config, nomeConv string, novoConv planosaude.Convenios, todos bool) {
 	// Checa se já existe Convenio
-
 	if nomeConv == "" || novoConv.NomeConv == "" {
 		fmt.Println("Erro: Insira um nome de convênio válido para atualizar.")
 	} else {
@@ -112,14 +120,16 @@ func atualizaConv(conf lib.Config, nomeConv string, novoConv planosaude.Convenio
 		}
 	}
 }
-func gravaConvenio(conf lib.Config, conv planosaude.Convenios) {
+
+// Salva convênio no armazém
+func gravaConvenio(conv planosaude.Convenios) {
 	// Checa se já existe Convenio
 	convs, err := armazenamento.GetConvenios(conv.NomeConv)
 	if err != nil {
 		fmt.Println(err)
 	}
 	if convs == nil {
-		result, err := armazenamento.GravarConvenio(conf, conv)
+		result, err := armazenamento.GravarConvenio(conv)
 		if err != nil {
 			fmt.Println(err)
 		} else {
@@ -130,7 +140,8 @@ func gravaConvenio(conf lib.Config, conv planosaude.Convenios) {
 	}
 }
 
-func listaConvenio(conf lib.Config, s string) {
+// Lista Convenios
+func listaConvenio(conf common.Config, s string) {
 	var convs []planosaude.Convenios
 	convs, err := armazenamento.GetConvenios(s)
 	if err != nil {
@@ -140,7 +151,8 @@ func listaConvenio(conf lib.Config, s string) {
 	}
 }
 
-func deletaConvenio(conf lib.Config, sconv string, todos bool) {
+// Deleta Convênio, 1 ou mais
+func deletaConvenio(conf common.Config, sconv string, todos bool) {
 	// Checa se já existe Convenio
 	convs, err := armazenamento.GetConvenios(sconv)
 	if err != nil {
@@ -161,3 +173,32 @@ func deletaConvenio(conf lib.Config, sconv string, todos bool) {
 		fmt.Println("Convênio:\"" + sconv + "\" não existe no Armazém.")
 	}
 }
+
+// CRUD Plano Saude
+// Verica se o plano está correto e válido
+// func verificaPlano(p planosaude.PlanoSaude) error {
+// 	// Relaciona Convênios cadastrados
+// 	conv, err := armazenamento.GetConvenios("*")
+// 	if err != nil {
+// 		fmt.Println("Erro:", err)
+// 	}
+// 	// planoTeste := planosaude.PlanoSaude{Convenio: conv[1], NrPlano: "12345-0", DataValidade: d1}
+// 	// var str string
+// 	// for _, v := range conv {
+// 	// 	str += " " + v.NomeConv
+// 	// }
+// 	// fmt.Println("Verificando o plano:", planoTeste.Convenio.NomeConv, "nos convenios:", str)
+
+// 	// Testa se o Plano está em conformidade
+// 	err = planosaude.VerificarPlano(p)
+// 	if err != nil {
+// 		return err
+// 	} else {
+// 		// Testa se o Contrato do Plano ainda é válido
+// 		if p.Convenio.DataContratoConv.Before(time.Now()) {
+// 			return errors.New("Não possível usar o Plano. Contratro do Convênio: " + v.NomeConv + " está vencido desde a data:"+ v.DataContratoConv.Format("02/01/2006"))
+// 			}
+// 		}
+// 	}
+// 	return nil
+// }

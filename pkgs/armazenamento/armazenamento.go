@@ -1,8 +1,8 @@
 package armazenamento
 
 import (
-	"Agenda/pkgs"
 	"Agenda/pkgs/agendamento"
+	"Agenda/pkgs/common"
 	"Agenda/pkgs/planosaude"
 	"context"
 	"fmt"
@@ -23,7 +23,7 @@ var Agentes *mongo.Collection
 var Convenios *mongo.Collection
 var Cliente *mongo.Client
 
-func IniciarArmazenamento() {
+func init() {
 	// Testes iniciais do programa e verificação de requisitos
 	// Por exemplo:
 	// - Testar no config.ini os dias da semana de 0 à 6
@@ -31,8 +31,8 @@ func IniciarArmazenamento() {
 
 	// Carrega as configurações
 	fmt.Print("Iniciando as Configurações do Armazenamento...")
-	var conf pkgs.Config
-	conf = pkgs.ConfigInicial
+	var conf common.Config
+	conf = common.ConfigInicial
 	fmt.Println(conf.ArmazemDados)
 
 	// Conectar e testar o acesso ao Armazem de Dados
@@ -56,7 +56,7 @@ func IniciarArmazenamento() {
 	}
 }
 
-func ConnectMongo(conf pkgs.Config) (*mongo.Client, error) {
+func ConnectMongo(conf common.Config) (*mongo.Client, error) {
 	// Conectando ao MongoDB
 	clientOptions := options.Client().ApplyURI("mongodb://" + conf.ArmazemHost + ":" + strconv.Itoa(conf.ArmazemPort) + "/")
 	client, err := mongo.Connect(ctx, clientOptions)
@@ -78,7 +78,7 @@ func ConnectMongo(conf pkgs.Config) (*mongo.Client, error) {
 // Convenios = client.Database(conf.ArmazemDatabase).Collection("Convenios") vCRUD
 
 // CRUD Convenios
-func GravarConvenio(cf pkgs.Config, cv planosaude.Convenios) (interface{}, error) {
+func GravarConvenio(cv planosaude.Convenios) (interface{}, error) {
 	// Antes de qq coisa, verificar os dados do Convenio
 	err := planosaude.VerificarConvenio(cv)
 	if err != nil {
@@ -90,7 +90,7 @@ func GravarConvenio(cf pkgs.Config, cv planosaude.Convenios) (interface{}, error
 	// 	return nil, err
 	// }
 	// Definir o Banco e a Coleção de Dados
-	Agendamentos = Cliente.Database(pkgs.ConfigInicial.ArmazemDatabase).Collection("Convenios")
+	Agendamentos = Cliente.Database(common.ConfigInicial.ArmazemDatabase).Collection("Convenios")
 	// Inserir os Dados no contexto atual
 	result, err := Agendamentos.InsertOne(ctx, cv)
 	if err != nil {
@@ -104,7 +104,7 @@ func GetConvenios(nome string) ([]planosaude.Convenios, error) {
 	// if err != nil {
 	// 	return nil, err
 	// }
-	Agendamentos = Cliente.Database(pkgs.ConfigInicial.ArmazemDatabase).Collection("Convenios")
+	Agendamentos = Cliente.Database(common.ConfigInicial.ArmazemDatabase).Collection("Convenios")
 
 	filter := bson.M{}
 	if nome == "*" {
@@ -123,7 +123,7 @@ func GetConvenios(nome string) ([]planosaude.Convenios, error) {
 	}
 	return conv, nil
 }
-func DeletarConvenio(conf pkgs.Config, nome string, todos bool) (*mongo.DeleteResult, error) {
+func DeletarConvenio(conf common.Config, nome string, todos bool) (*mongo.DeleteResult, error) {
 	// Conectar ao Armazem de Dados
 	client, err := ConnectMongo(conf)
 	if err != nil {
@@ -146,7 +146,7 @@ func DeletarConvenio(conf pkgs.Config, nome string, todos bool) (*mongo.DeleteRe
 	// Retornar o resultado
 	return result, nil
 }
-func AtualizarConvenio(conf pkgs.Config, nomeConv string, novoConv planosaude.Convenios, todos bool) (*mongo.UpdateResult, error) {
+func AtualizarConvenio(conf common.Config, nomeConv string, novoConv planosaude.Convenios, todos bool) (*mongo.UpdateResult, error) {
 	// Conectar ao Armazem de Dados
 	client, err := ConnectMongo(conf)
 	if err != nil {
@@ -172,7 +172,7 @@ func AtualizarConvenio(conf pkgs.Config, nomeConv string, novoConv planosaude.Co
 }
 
 // CRUD Agendamentos
-func GravarAgendamento(conf pkgs.Config, ag agendamento.Agendamento) (interface{}, error) {
+func GravarAgendamento(conf common.Config, ag agendamento.Agendamento) (interface{}, error) {
 	client, err := ConnectMongo(conf)
 	if err != nil {
 		return nil, err
