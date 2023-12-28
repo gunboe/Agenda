@@ -1,4 +1,4 @@
-package main
+package lib
 
 import (
 	"errors"
@@ -11,7 +11,7 @@ import (
 	"github.com/go-ini/ini"
 )
 
-type config struct {
+type Config struct {
 	NomeFantasia     string
 	HoraInicioAtende time.Duration
 	DuracaoAtende    time.Duration
@@ -21,9 +21,25 @@ type config struct {
 	DiasSemanaAtende []int
 	admSecret        string
 	Canais           []string
+	ArmazemDados     string
+	ArmazemHost      string
+	ArmazemPort      int
+	ArmazemUser      string
+	ArmazemPassword  string
+	ArmazemDatabase  string
+	ArmazemCert      string
+	ArmazemCa        string
+	ArmazemChave     string
+	ArmazemExtra     string
 }
 
-func (c *config) SetSecret(s string) error {
+var ConfigInicial Config
+
+func init() {
+	ConfigInicial.CarregaConfig("config.ini")
+}
+
+func (c *Config) SetSecret(s string) error {
 	if s == "" {
 		return errors.New("[SetSecret] Segredo Nulo ou vazio!")
 	} else {
@@ -31,7 +47,8 @@ func (c *config) SetSecret(s string) error {
 		return nil
 	}
 }
-func (c *config) GetSecret() (string, error) {
+
+func (c *Config) GetSecret() (string, error) {
 	if c.admSecret == "" {
 		return "", errors.New("[GetSecret] Segredo Nulo ou vazio!")
 	} else {
@@ -39,38 +56,38 @@ func (c *config) GetSecret() (string, error) {
 	}
 }
 
-func init() {
-	// Testes iniciais do programa e verificação de requisitos
-	// Por exemplo:
-	// - Testar no config.ini os dias da semana de 0 à 6
-	// - Lançar os Erros como Logs
-}
-
-func (conf *config) carregaConfig(file string) {
+func (conf *Config) CarregaConfig(file string) {
 
 	// Definir valores iniciais a partir do arquivo config.ini
 	inidata, err := ini.Load(file)
 	if err != nil {
-		fmt.Printf("Fail to read file: %v", err)
+		fmt.Printf("Erro: \"%v\". O arquivo \"config.ini\" existe? ", err)
 		os.Exit(1)
 	}
 	// TODO: Tratar os erros abaixo
-	section := inidata.Section("config")
-	conf.NomeFantasia = section.Key("NomeFantasia").String()
-	conf.HoraInicioAtende, _ = time.ParseDuration(section.Key("HoraInicioAtende").String())
-	conf.DuracaoAtende, _ = time.ParseDuration(section.Key("DuracaoAtende").String())
-	conf.HoraFimAtende, _ = time.ParseDuration(section.Key("HoraFimAtende").String())
-	conf.HoraInterval, _ = time.ParseDuration(section.Key("HoraInterval").String())
-	conf.DuraInterval, _ = time.ParseDuration(section.Key("DuraInterval").String())
-	conf.DiasSemanaAtende, err = string2VetorInt(section.Key("DiasSemanaAtende").String())
+	sectionAgenda := inidata.Section("Agenda")
+	sectionConfig := inidata.Section("Config")
+	conf.NomeFantasia = sectionAgenda.Key("NomeFantasia").String()
+	conf.HoraInicioAtende, _ = time.ParseDuration(sectionAgenda.Key("HoraInicioAtende").String())
+	conf.DuracaoAtende, _ = time.ParseDuration(sectionAgenda.Key("DuracaoAtende").String())
+	conf.HoraFimAtende, _ = time.ParseDuration(sectionAgenda.Key("HoraFimAtende").String())
+	conf.HoraInterval, _ = time.ParseDuration(sectionAgenda.Key("HoraInterval").String())
+	conf.DuraInterval, _ = time.ParseDuration(sectionAgenda.Key("DuraInterval").String())
+	conf.DiasSemanaAtende, err = string2VetorInt(sectionAgenda.Key("DiasSemanaAtende").String())
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("Erro:", err)
+		os.Exit(1)
 	}
-	conf.admSecret = section.Key("admSecret").String()
-	conf.Canais, err = string2VetorString(section.Key("Canais").String())
+	conf.admSecret = sectionConfig.Key("admSecret").String()
+	conf.Canais, err = string2VetorString(sectionConfig.Key("canais").String())
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("Erro:", err)
+		os.Exit(1)
 	}
+	conf.ArmazemDados = sectionConfig.Key("armazemDados").String()
+	conf.ArmazemHost = sectionConfig.Key("host").String()
+	conf.ArmazemPort, _ = sectionConfig.Key("port").Int()
+	conf.ArmazemDatabase = sectionConfig.Key("database").String()
 }
 
 func string2VetorInt(str string) ([]int, error) {
