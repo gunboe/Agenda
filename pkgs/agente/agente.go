@@ -1,7 +1,7 @@
 package agente
 
 import (
-	"Agenda/lib"
+	"Agenda/pkgs"
 	"errors"
 	"time"
 )
@@ -60,7 +60,7 @@ func VerificarAgendaLiberada(al AgendaLiberada) error {
 func VerificarAgente(ag Agente) error {
 	if ag.Nome == "" || ag.CPF == "" || ag.NrCelular == 0 || ag.Especialidades == nil || ag.secret == "" {
 		return errors.New("Nome, CPF, NrCelular, Especialidades ou Secret está vazio/zerado.")
-	} else if !lib.CPFvalido(ag.CPF) {
+	} else if !pkgs.CPFvalido(ag.CPF) {
 		return errors.New("CPF inválido.")
 	}
 	return nil

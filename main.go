@@ -1,11 +1,12 @@
 package main
 
 import (
-	"Agenda/agente"
-	"Agenda/armazenamento"
-	"Agenda/lib"
-	"Agenda/paciente"
-	"Agenda/planosaude"
+	lib "Agenda/pkgs"
+	"Agenda/pkgs/agente"
+	"Agenda/pkgs/armazenamento"
+	"Agenda/pkgs/paciente"
+	"Agenda/pkgs/planosaude"
+
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -33,7 +34,7 @@ func main() {
 		fmt.Println("Erro:", err)
 	}
 	fmt.Println("Verificando plano...")
-	planoTeste := planosaude.PlanoSaude{conv[1], "12345-0", d1}
+	planoTeste := planosaude.PlanoSaude{Convenio: conv[1], NrPlano: "12345-0", DataValidade: d1}
 	err = planosaude.VerificarPlano(planoTeste)
 	if err != nil {
 		fmt.Println("Erro:", err)

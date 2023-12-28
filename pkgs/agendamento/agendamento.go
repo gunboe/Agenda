@@ -1,8 +1,8 @@
 package agendamento
 
 import (
-	"Agenda/agente"
-	"Agenda/paciente"
+	"Agenda/pkgs/agente"
+	"Agenda/pkgs/paciente"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
