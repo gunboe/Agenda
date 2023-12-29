@@ -106,7 +106,7 @@ func string2VetorInt(str string) ([]int, error) {
 			// Verifica valores do dia da semana repetidos
 			for j := 0; j < len(intSlice); j++ {
 				if intSlice[j] == num {
-					return nil, errors.New("Erro: Valor de dia da semana repetido" + string(num))
+					return nil, errors.New("Erro: Valor de dia da semana repetido" + fmt.Sprint(num))
 				}
 			}
 			intSlice[i] = num
