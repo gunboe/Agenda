@@ -4,12 +4,11 @@ import (
 	"Agenda/pkgs/agente"
 	"Agenda/pkgs/armazenamento"
 	"Agenda/pkgs/common"
-	"Agenda/pkgs/convenio"
 	"Agenda/pkgs/paciente"
-	"Agenda/pkgs/planosaude"
+	"os"
+	"strings"
 
 	"fmt"
-	"time"
 )
 
 func main() {
@@ -21,29 +20,44 @@ func main() {
 	var conf common.Config
 	conf = common.ConfigInicial
 	var err error
-	fmt.Println(conf.ArmazemDatabase)
+	fmt.Println("Utilizando o DataBase:", conf.ArmazemDatabase)
+
+	// Relaciona todos os Convênnios
+	todosConvs, err := armazenamento.GetConvenios("*")
+	if err != nil {
+		fmt.Println("Erro:", err)
+	}
+	var listaConvs string
+	for _, v := range todosConvs {
+		listaConvs += " \"" + v.NomeConv + "\""
+	}
+	listaConvs = strings.TrimSpace(listaConvs)
+	fmt.Println("Lista de Todos os Convenios:", listaConvs)
 
 	// TESTES
 	// Inicialização de algumas variáveis pra teste da Estrutra de Dados
-	var d1, _ = time.Parse("02/01/2006", "22/06/2024")
-	var d2, _ = time.Parse("02/01/2006", "00/00/000")
+	// var d1, _ = time.Parse("02/01/2006", "22/06/2023")
+	// var d2, _ = time.Parse("02/01/2006", "00/00/000")
 	// var dur, _ = time.ParseDuration("1h")
-	conv, err := armazenamento.GetConvenios("*")
-	if err != nil {
-		fmt.Println("Erro:", err)
+
+	// Inicializa Convênio e Plano
+	// convTeste := convenio.Convenios{NomeConv: "Particular", Endereco: "", DataContratoConv: d2, Disponivel: true}
+	conv := "sul"
+	convs := getConvenios(conv)
+	if convs == nil {
+		os.Exit(1)
 	}
-	convTeste := convenio.Convenios{NomeConv: "Particular", Endereco: "", DataContratoConv: d2, Disponivel: true}
-	planoTeste := planosaude.PlanoSaude{Convenio: convTeste, NrPlano: "12345-0", DataValidade: d1}
-	var str string
-	for _, v := range conv {
-		str += " " + v.NomeConv
-	}
-	fmt.Println("Verificando o plano:", planoTeste.Convenio.NomeConv, "nos convenios:", str)
-	err = planosaude.VerificarPlano(planoTeste)
-	if err != nil {
-		fmt.Println("Erro:", err)
-	}
-	var pacienteA = paciente.Paciente{Nome: "Gabriel Araujo", CPF: "123456789-00", NrCelular: 8199998888, Email: "biel@net.io", Endereco: "Av. Cons Rosa", PlanoSaude: planoTeste}
+
+	// planoTeste := planosaude.PlanoSaude{Convenio: convs[0], NrPlano: "12345-6", DataValidade: d1}
+
+	// fmt.Println("Verificando o plano:", planoTeste.Convenio.NomeConv, "nos convenios:", listaConvs)
+	// err = planosaude.VerificarPlano(planoTeste)
+	// if err != nil {
+	// 	fmt.Println("Erro:", err)
+	// 	os.Exit(1)
+	// }
+
+	var pacienteA = paciente.Paciente{Nome: "Gabriel Araujo", CPF: "123456789-00", NrCelular: 8199998888, Email: "biel@net.io", Endereco: "Av. Cons Rosa"}
 	err = pacienteA.SetSecret("SEGREDOBIEL")
 	if err != nil {
 		fmt.Println("Erro:", err)
@@ -69,27 +83,27 @@ func main() {
 	// }
 
 	// Criar Convenio
-	// nomeConv := "CASSI"
-	// endConv := "Av Rosa e Silva, 9090"
-	// dataConv, _ := time.Parse("02/01/2006", "01/01/2022") // Data deve conter zero!!
+	// nomeConv := "Unimed"
+	// endConv := "Av Agamenom Maga, 777"
+	// dataConv, _ := time.Parse("02/01/2006", "03/03/2033") // Data deve conter zero!!
 	// ID: primitive.NewObjectID(),
-	// novoConv := convenio.Convenios{Plano: nomeConv, Endereco: endConv, DataContratoConv: dataConv, Disponivel: false}
+	// novoConv := convenio.Convenios{ID: primitive.NewObjectID(), NomeConv: nomeConv, Endereco: endConv, DataContratoConv: dataConv, Disponivel: true}
 	// novoConv := convenio.Convenios{Plano: nomeConv, DataContratoConv: dataConv}
 
-	// gravaConvenio(convTeste)
+	// criaConvenio(novoConv)
 
 	// Listar Convenios
-	// listaConvenio(conf, "*")
+	listaConvenio("sul")
 
 	// Teste criar novo convenio
 	// conv.Plano = "sul"
 	// conv.ID = primitive.NewObjectID()
 
-	// // gravaConvenio(conf, conv)
-	// plano := "tokyo"
+	// Teste DELETE Convenio
+	// plano := "*"
 	// todos := true
-	// deletaConvenio(conf, plano, todos)
-	listaConvenio("*")
+	// deletaConvenio(plano, todos)
+	// listaConvenio("*")
 
 	// filtroNomeConv := "CASSI"
 	// todos := false

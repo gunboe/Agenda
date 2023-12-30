@@ -14,9 +14,10 @@ import (
 // Ambiente do MongoDB
 var ctx = context.TODO()
 var Agendamentos *mongo.Collection
+var Convenios *mongo.Collection
+var PlanoSaude *mongo.Collection
 var Pacientes *mongo.Collection
 var Agentes *mongo.Collection
-var Convenios *mongo.Collection
 var Cliente *mongo.Client
 
 // Inicialização do serviço de armazenamento

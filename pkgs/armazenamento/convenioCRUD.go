@@ -10,7 +10,7 @@ import (
 )
 
 // CRUD Convenios
-// Criar Convênio a ser utilizado na criação dos Planos de Saude.
+// Criar Convênios para serem utilizados nos Planos de Saude.
 func CriarConvenio(cv convenio.Convenios) (interface{}, error) {
 	// Antes de qq coisa, verificar os dados do Convenio.
 	err := convenio.VerificarConvenio(cv)
@@ -18,9 +18,9 @@ func CriarConvenio(cv convenio.Convenios) (interface{}, error) {
 		return nil, err
 	}
 	// Definir o Banco e a Coleção de Dados
-	Agendamentos = Cliente.Database(common.ConfigInicial.ArmazemDatabase).Collection("Convenios")
+	Convenios = Cliente.Database(common.ConfigInicial.ArmazemDatabase).Collection("Convenios")
 	// Inserir os Dados no contexto atual
-	result, err := Agendamentos.InsertOne(ctx, cv)
+	result, err := Convenios.InsertOne(ctx, cv)
 	if err != nil {
 		return nil, err
 	}
@@ -32,26 +32,26 @@ func CriarConvenio(cv convenio.Convenios) (interface{}, error) {
 // A String "*" indica todos os Convênios.
 func GetConvenios(nome string) ([]convenio.Convenios, error) {
 	// Definir o Banco e a Coleção de Dados
-	Agendamentos = Cliente.Database(common.ConfigInicial.ArmazemDatabase).Collection("Convenios")
+	Convenios = Cliente.Database(common.ConfigInicial.ArmazemDatabase).Collection("Convenios")
 	// Cria os filtros adequados de pesquisa no MongoDB
 	var filter bson.M
 	if nome == "*" {
 		filter = bson.M{}
 	} else {
-		filter = bson.M{"plano": primitive.Regex{Pattern: nome, Options: "i"}}
+		filter = bson.M{"nomeconv": primitive.Regex{Pattern: nome, Options: "i"}}
 	}
 	// Alinha o cursor de busca
-	cursor, err := Agendamentos.Find(ctx, filter)
+	cursor, err := Convenios.Find(ctx, filter)
 	if err != nil {
 		return nil, err
 	}
 	// Cria um Slice para receber os Docs apontados pelo cursor do Driver do Mongo
-	var conv []convenio.Convenios
-	err = cursor.All(ctx, &conv)
+	var convs []convenio.Convenios
+	err = cursor.All(ctx, &convs)
 	if err != nil {
 		return nil, err
 	}
-	return conv, nil
+	return convs, nil
 }
 
 // Deleta os Convênios de acordo com o "Nome" passado como parâmetro.
@@ -62,7 +62,12 @@ func DeletarConvenio(nome string, todos bool) (*mongo.DeleteResult, error) {
 	// Inserir os Dados no contexto atual
 	var result *mongo.DeleteResult
 	// Cria os filtros adequados de pesquisa no MongoDB
-	filter := bson.M{"plano": primitive.Regex{Pattern: nome, Options: "i"}}
+	var filter bson.M
+	if nome == "*" {
+		filter = bson.M{}
+	} else {
+		filter = bson.M{"plano": primitive.Regex{Pattern: nome, Options: "i"}}
+	}
 	var err error
 	if todos {
 		// opts := options.Delete().SetHint(bson.M{"_id": 1})

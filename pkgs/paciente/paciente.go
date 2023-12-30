@@ -2,30 +2,32 @@ package paciente
 
 import (
 	"Agenda/pkgs/common"
-	"Agenda/pkgs/planosaude"
 	"errors"
 )
 
 type Paciente struct {
-	Nome       string
-	CPF        string
-	NrCelular  int
-	Email      string
-	Endereco   string
-	PlanoSaude planosaude.PlanoSaude
-	secret     string
+	Nome      string
+	CPF       string
+	NrCelular int
+	Email     string
+	Endereco  string
+	// PlanoSaude []planosaude.PlanoSaude
+	secret    string
+	Bloqueado bool
 }
 
 func VerificarPaciente(pac Paciente) error {
-	if pac.Nome == "" || pac.CPF == "" || pac.NrCelular == 0 || pac.Endereco == "" || pac.secret == "" || pac.PlanoSaude.Convenio.NomeConv == "" {
-		return errors.New("Nome, CPF, NrCelular, Plano de Saúde ou Secret está vazio/zerado.")
+	if pac.Nome == "" || pac.CPF == "" || pac.NrCelular == 0 || pac.secret == "" || !pac.Bloqueado { //|| pac.PlanoSaude == nil {
+		return errors.New("Nome, CPF, NrCelular ou Secret está vazio/zerado ou Paciente Bloqueado.")
 	} else if !common.CPFvalido(pac.CPF) {
 		return errors.New("CPF inválido.")
-	} else {
-		err := planosaude.VerificarPlano(pac.PlanoSaude)
-		if err != nil {
-			return err
-		}
+		// } else {
+		// for _, v := range pac.PlanoSaude {
+		// err := planosaude.VerificarPlano(v)
+		// if err != nil {
+		// 	return err
+		// }
+		// }
 	}
 	return nil
 }
