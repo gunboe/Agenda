@@ -3,17 +3,20 @@ package paciente
 import (
 	"Agenda/pkgs/common"
 	"errors"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type Paciente struct {
-	Nome      string
-	CPF       string
-	NrCelular int
-	Email     string
-	Endereco  string
+	ID        primitive.ObjectID `bson:"_id,omitempty"`
+	Nome      string             `bson:"nome,omitempty"`
+	CPF       string             `bson:"cpf,omitempty"`
+	NrCelular int                `bson:"nr_celular,omitempty"`
+	Email     string             `bson:"email,omitempty"`
+	Endereco  string             `bson:"endereco,omitempty"`
+	secret    string             `bson:"secret,omitempty"`
+	Bloqueado bool               `bson:"bloqueado,omitempty"`
 	// PlanoSaude []planosaude.PlanoSaude
-	secret    string
-	Bloqueado bool
 }
 
 func VerificarPaciente(pac Paciente) error {

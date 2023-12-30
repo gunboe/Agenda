@@ -6,13 +6,16 @@ import (
 	"errors"
 	"strings"
 	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type PlanoSaude struct {
-	Convenio     convenio.Convenios `bson:"convenio"`
-	Paciente     paciente.Paciente  `bson:"paciente"`
-	NrPlano      string             `bson:"nr_plano"`
-	DataValidade time.Time          `bson:"data_validade_plano"`
+	ID           primitive.ObjectID `bson:"_id,omitempty"`
+	Convenio     convenio.Convenios `bson:"convenio,omitempty"`
+	Paciente     paciente.Paciente  `bson:"paciente,omitempty"`
+	NrPlano      string             `bson:"nr_plano,omitempty"`
+	DataValidade time.Time          `bson:"data_validade_plano,omitempty"`
 }
 
 // Checar Planos em Convênios
