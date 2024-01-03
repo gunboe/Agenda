@@ -1,14 +1,14 @@
 package main
 
 import (
-	"Agenda/pkgs/agente"
-	"Agenda/pkgs/armazenamento"
-	"Agenda/pkgs/common"
+	"Agenda/pkgs/convenio"
 	"Agenda/pkgs/paciente"
-	"os"
-	"strings"
+	"Agenda/pkgs/planopgto"
+	"time"
 
 	"fmt"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func main() {
@@ -16,59 +16,64 @@ func main() {
 	// Inicio da Rotina de verdade
 	//
 
-	// Carregar as configurações
-	var conf common.Config
-	conf = common.ConfigInicial
-	var err error
-	fmt.Println("Utilizando o DataBase:", conf.ArmazemDatabase)
-
-	// Relaciona todos os Convênnios
-	todosConvs, err := armazenamento.GetConvenios("*")
-	if err != nil {
-		fmt.Println("Erro:", err)
-	}
-	var listaConvs string
-	for _, v := range todosConvs {
-		listaConvs += " \"" + v.NomeConv + "\""
-	}
-	listaConvs = strings.TrimSpace(listaConvs)
-	fmt.Println("Lista de Todos os Convenios:", listaConvs)
+	// Carregar as configurações e verifica a conexão com o banco
+	inicializaAmbiente()
 
 	// TESTES
+	var err error
+
 	// Inicialização de algumas variáveis pra teste da Estrutra de Dados
 	// var d1, _ = time.Parse("02/01/2006", "22/06/2023")
+	var d1, _ = time.Parse("02/01/2006", "25/05/2025")
 	// var d2, _ = time.Parse("02/01/2006", "00/00/000")
 	// var dur, _ = time.ParseDuration("1h")
 
 	// Inicializa Convênio e Plano
-	// convTeste := convenio.Convenios{NomeConv: "Particular", Endereco: "", DataContratoConv: d2, Disponivel: true}
-	conv := "sul"
-	convs := getConvenios(conv)
-	if convs == nil {
-		os.Exit(1)
-	}
+	convTeste := convenio.Convenio{NomeConv: "Sul America", Endereco: "Rua das Nações,163", DataContratoConv: d1, Disponivel: true}
+	criaConvenio(convTeste)
 
-	// planoTeste := planosaude.PlanoSaude{Convenio: convs[0], NrPlano: "12345-6", DataValidade: d1}
+	//  Retorna Conv
+	// conv := "sul"
+	// convs := getConvenios(conv)
+	// if convs == nil {
+	// 	os.Exit(1)
+	// }
 
 	// fmt.Println("Verificando o plano:", planoTeste.Convenio.NomeConv, "nos convenios:", listaConvs)
-	// err = planosaude.VerificarPlano(planoTeste)
+	// err = planopgto.VerificarPlano(planoTeste)
 	// if err != nil {
 	// 	fmt.Println("Erro:", err)
 	// 	os.Exit(1)
 	// }
 
-	var pacienteA = paciente.Paciente{Nome: "Gabriel Araujo", CPF: "123456789-00", NrCelular: 8199998888, Email: "biel@net.io", Endereco: "Av. Cons Rosa"}
+	// Antes de criar o Plano de Pagamento deve-se, obter o Convenio cadastrado no Mongo
+	convTeste = getConvenios("sul")[0]
+	// Cria um Plano
+	planoTeste := planopgto.PlanoPgto{ID: primitive.NewObjectID(), ConvenioId: convTeste.ID,
+		NrPlano: "00000-01", DataValidade: d1, Ativo: true, Particular: false}
+	fmt.Println("PlanoPgto(planoTeste):", planoTeste)
+	VerificaPlanoPgto(planoTeste)
+
+	// Criadno Paciente com um PlanoPgto
+	var pacienteA = paciente.Paciente{ID: primitive.NewObjectID(), Nome: "Gunther boeckmann", CPF: "891552974-04",
+		PlanosPgts: []planopgto.PlanoPgto{planoTeste}, NrCelular: 8199998888, Email: "biel@net.io", Endereco: "", Bloqueado: false}
 	err = pacienteA.SetSecret("SEGREDOBIEL")
 	if err != nil {
 		fmt.Println("Erro:", err)
 	}
-
-	var ag = agente.Agente{Nome: "Elke", CPF: "001.038.719-32", NrCelular: 123456798, Especialidades: []string{"Endocrino", "Clinico"}}
-	err = ag.SetSecret("senha123")
-	err = agente.VerificarAgente(ag)
+	err = paciente.VerificarPaciente(pacienteA)
 	if err != nil {
-		fmt.Println(err, ag.Nome)
+		fmt.Println("Erro:", err)
+	} else {
+		fmt.Println(printJSON(pacienteA))
 	}
+
+	// var ag = agente.Agente{Nome: "Elke", CPF: "001.038.719-32", NrCelular: 123456798, Especialidades: []string{"Endocrino", "Clinico"}}
+	// err = ag.SetSecret("senha123")
+	// err = agente.VerificarAgente(ag)
+	// if err != nil {
+	// 	fmt.Println(err, ag.Nome)
+	// }
 	// fmt.Println(ag)
 	// fmt.Println(pacienteA)
 	// var agenteExec = agente.Agente{Nome: "Dr. Zebalos", CPF: "12345679-01", NrCelular: 8199997777, Especialidades: []string{"Ortopedista", "Cirurgião"}}
@@ -83,17 +88,16 @@ func main() {
 	// }
 
 	// Criar Convenio
-	// nomeConv := "Unimed"
-	// endConv := "Av Agamenom Maga, 777"
-	// dataConv, _ := time.Parse("02/01/2006", "03/03/2033") // Data deve conter zero!!
-	// ID: primitive.NewObjectID(),
-	// novoConv := convenio.Convenios{ID: primitive.NewObjectID(), NomeConv: nomeConv, Endereco: endConv, DataContratoConv: dataConv, Disponivel: true}
-	// novoConv := convenio.Convenios{Plano: nomeConv, DataContratoConv: dataConv}
-
-	// criaConvenio(novoConv)
+	nomeConv := "CASSI"
+	endConv := "Av Rosa e Silva,9000"
+	dataConv, _ := time.Parse("02/01/2006", "04/04/2034") // Data deve conter zero!!
+	// // ID: primitive.NewObjectID(),
+	novoConv := convenio.Convenio{ID: primitive.NewObjectID(), NomeConv: nomeConv, Endereco: endConv, DataContratoConv: dataConv, Disponivel: true}
+	// // novoConv := convenio.Convenios{Plano: nomeConv, DataContratoConv: dataConv}
+	criaConvenio(novoConv)
 
 	// Listar Convenios
-	listaConvenio("sul")
+	// listaConvenio("sul")
 
 	// Teste criar novo convenio
 	// conv.Plano = "sul"

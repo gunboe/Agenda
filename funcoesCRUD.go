@@ -9,13 +9,36 @@ package main
 
 import (
 	"Agenda/pkgs/armazenamento"
+	"Agenda/pkgs/common"
 	"Agenda/pkgs/convenio"
 	"Agenda/pkgs/paciente"
-	"Agenda/pkgs/planosaude"
+	"Agenda/pkgs/planopgto"
 	"encoding/json"
 	"fmt"
 	"strings"
 )
+
+// Inicializa o ambiente
+func inicializaAmbiente() {
+	// Carrega as configurações
+	var conf common.Config
+	conf = common.ConfigInicial
+
+	// Conecta ao Banco
+	fmt.Println("Utilizando o DataBase:", conf.ArmazemDatabase)
+
+	// Testa o Banco relacionando todos os Convênnios
+	todosConvs := getConvenios("*")
+	var listaConvs string
+	for _, v := range todosConvs {
+		listaConvs += " \"" + v.NomeConv + "\""
+	}
+	listaConvs = strings.TrimSpace(listaConvs)
+	fmt.Println("Lista de Todos os Convenios:", listaConvs)
+
+	// Avisa que está pronto
+	fmt.Println("Ambiente pronto para uso!\n")
+}
 
 // Converter struct para Json
 func printJSON(input interface{}) string {
@@ -26,18 +49,18 @@ func printJSON(input interface{}) string {
 // CRUD Convenios
 
 // (CREATE) Cria convênio e salva no armazém
-func criaConvenio(conv convenio.Convenios) {
+func criaConvenio(conv convenio.Convenio) {
 	// Checa se já existe Convenio
-	convs, err := armazenamento.GetConvenios(conv.NomeConv)
+	convs, err := armazenamento.GetConveniosByName(conv.NomeConv)
 	if err != nil {
 		fmt.Println("Erro:", err)
 	}
 	if convs == nil {
-		result, err := armazenamento.CriarConvenio(conv)
+		result, err := armazenamento.CreateConvenio(conv)
 		if err != nil {
 			fmt.Println("Erro:", err)
 		} else {
-			fmt.Println("Convenio salvo:", result)
+			fmt.Println("Convenio Criado e armazenado:", result)
 		}
 	} else {
 		fmt.Println("Convênio:\"" + conv.NomeConv + "\" já existe.")
@@ -46,8 +69,8 @@ func criaConvenio(conv convenio.Convenios) {
 
 // (READ-funcoesCRUD.go) Retorna um Vetor de Convenios passando como parâmetro o "Nome" do convênio.
 // Se o argumento "nome" = "*", retornará todos os convênios armazenados.
-func getConvenios(conv string) []convenio.Convenios {
-	convs, err := armazenamento.GetConvenios(conv)
+func getConvenios(conv string) []convenio.Convenio {
+	convs, err := armazenamento.GetConveniosByName(conv)
 	if err != nil {
 		fmt.Println("Erro:", err)
 		return nil
@@ -63,7 +86,7 @@ func getConvenios(conv string) []convenio.Convenios {
 // Se o argumento "nome" = "*", retornará todos os convênios armazenados.
 func listaConvenio(nome string, formato ...string) {
 	fmt.Println("Localizando Convênios...")
-	convs, err := armazenamento.GetConvenios(nome)
+	convs, err := armazenamento.GetConveniosByName(nome)
 	if err != nil {
 		fmt.Println("Erro:", err)
 	} else {
@@ -79,7 +102,7 @@ func listaConvenio(nome string, formato ...string) {
 
 // (UPDATE) Atualiza os Dados de um ou mais Convênio armazenado utilizando como parâmetro o Nome do Convênio("nome"),
 // o Struct do Novo Convênio("novoConv") e a opção de alterar Todos("todos") simultaneamente.
-func atualizaConv(nome string, novoConv convenio.Convenios, todos bool) {
+func atualizaConv(nome string, novoConv convenio.Convenio, todos bool) {
 	// Checa se já existe Convenio
 	if nome == "" || novoConv.NomeConv == "" {
 		fmt.Println("Erro: Insira um nome de convênio válido para atualizar.")
@@ -90,7 +113,7 @@ func atualizaConv(nome string, novoConv convenio.Convenios, todos bool) {
 			fmt.Println("Erro:", err)
 		} else {
 			// Atualiza os dados do Convênio
-			result, err := armazenamento.AtualizarConvenio(nome, novoConv, todos)
+			result, err := armazenamento.UpdateConvenio(nome, novoConv, todos)
 			if err != nil {
 				fmt.Println("Erro:", err)
 			} else {
@@ -104,14 +127,14 @@ func atualizaConv(nome string, novoConv convenio.Convenios, todos bool) {
 // Para Deletar todos os Convênios da busca é possível utilizar o parâmetro Boleano "todos".
 func deletaConvenio(sconv string, todos bool) {
 	// Checa se existe algum Convenio com o padrão de Nome passado
-	convs, err := armazenamento.GetConvenios(sconv)
+	convs, err := armazenamento.GetConveniosByName(sconv)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("Errro:", err)
 	}
 	if convs != nil {
-		result, err := armazenamento.DeletarConvenio(sconv, todos)
+		result, err := armazenamento.DeleteConvenio(sconv, todos)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Println("Erro:", err)
 		} else {
 			var p string
 			for _, s := range convs {
@@ -124,43 +147,61 @@ func deletaConvenio(sconv string, todos bool) {
 	}
 }
 
-// CRUD PlanoSaude
+// CRUD Paciente
+func CriaPaciente(pac paciente.Paciente) {
 
-// (CREATE) Cria PlanoSaude e salva no armazém
-func criaPlanoSaude(plano planosaude.PlanoSaude) {
-	// Checa se já existe PlanoSaude
-	planos, err := armazenamento.GetPlanoSaude(plano.Convenio.NomeConv)
+}
+
+// // CRUD PlanoPgto
+// Verificar se o Plano de Pgto passado é válido
+func VerificaPlanoPgto(plano planopgto.PlanoPgto) {
+	err := planopgto.VerificarPlano(plano)
 	if err != nil {
 		fmt.Println("Erro:", err)
 	}
-	if planos == nil {
-		result, err := armazenamento.CriarPlanoSaude(plano)
-		if err != nil {
-			fmt.Println("Erro:", err)
-		} else {
-			fmt.Println("Convenio salvo:", result)
-		}
-	} else {
-		fmt.Println("Convênio:\"" + plano.Convenio.NomeConv + "\" já existe.")
-	}
 }
 
-// (READ) Retorna um Vetor de Planos de Saude passando como parâmetro o "Convênio" do Plano.
-// Se o argumento "nome" = "*", retornará todos os convênios armazenados.
-func GetPlanoSaude(conv string) []planosaude.PlanoSaude {
-	planos, err := armazenamento.GetPlanoSaude(conv)
-	if err != nil {
-		fmt.Println("Erro:", err)
-		return nil
-	}
-	if planos == nil {
-		fmt.Println("Erro: Convênio: " + conv + " não encontrado.")
-		return nil
-	}
-	return planos
-}
+// // (CREATE) Cria objeto PlanoPgto do tipo Abstrato
+// func criaPlanoPgto(plano planopgto.PlanoPgto) {
+// 	// Checa se o PlanoPgto está ok
+// 	err := planopgto.VerificarPlano(plano)
+// 	if err != nil {
+// 		fmt.Println("Erro:", err)
+// 	}
+// 	// Checar se o Convênio está válido
+// 	// Checa se o PAciente já possui um Plano nesse convênio com o mesmo núemro
+// 	planos, err := armazenamento.GetPlanoPgto(plano.Convenio.NomeConv)
+// 	if err != nil {
+// 		fmt.Println("Erro:", err)
+// 	}
+// 	if planos == nil {
+// 		result, err := armazenamento.CriarPlanoPgto(plano)
+// 		if err != nil {
+// 			fmt.Println("Erro:", err)
+// 		} else {
+// 			fmt.Println("Plano de Pagamento salvo:", result)
+// 		}
+// 	} else {
+// 		fmt.Println("Plano de Pagamento:\"" + plano.Convenio.NomeConv + "\" já existe.")
+// 	}
+// }
 
-// (READ) Retorna um Vetor de Planos de Saude passando um "Paciente".
-func GetPlanoSaudeByPaciente(pac paciente.Paciente) []planosaude.PlanoSaude {
-	return nil
-}
+// // (READ) Retorna um Vetor de Planos de Pagamento passando como parâmetro o "Convênio" do Plano.
+// // Se o argumento "nome" = "*", retornará todos os convênios armazenados.
+// func GetPlanoPgto(conv string) []planopgto.PlanoPgto {
+// 	planos, err := armazenamento.GetPlanoPgto(conv)
+// 	if err != nil {
+// 		fmt.Println("Erro:", err)
+// 		return nil
+// 	}
+// 	if planos == nil {
+// 		fmt.Println("Erro: Plano de Pagamento: " + conv + " não encontrado.")
+// 		return nil
+// 	}
+// 	return planos
+// }
+
+// // (READ) Retorna um Vetor de Planos de Pagamento passando um "Paciente".
+// func GetPlanoPgtoByPaciente(pac paciente.Paciente) []planopgto.PlanoPgto {
+// 	return nil
+// }
