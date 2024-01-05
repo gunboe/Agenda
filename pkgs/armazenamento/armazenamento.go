@@ -15,7 +15,6 @@ import (
 var ctx = context.TODO()
 var Agendamentos *mongo.Collection
 var Convenios *mongo.Collection
-var PlanoPgto *mongo.Collection
 var Pacientes *mongo.Collection
 var Agentes *mongo.Collection
 var Cliente *mongo.Client

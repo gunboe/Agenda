@@ -16,6 +16,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // Inicializa o ambiente
@@ -23,19 +25,16 @@ func inicializaAmbiente() {
 	// Carrega as configurações
 	var conf common.Config
 	conf = common.ConfigInicial
-
 	// Conecta ao Banco
 	fmt.Println("Utilizando o DataBase:", conf.ArmazemDatabase)
-
 	// Testa o Banco relacionando todos os Convênnios
-	todosConvs := getConvenios("*")
+	todosConvs := getConveniosPorNome("*")
 	var listaConvs string
 	for _, v := range todosConvs {
 		listaConvs += " \"" + v.NomeConv + "\""
 	}
 	listaConvs = strings.TrimSpace(listaConvs)
 	fmt.Println("Lista de Todos os Convenios:", listaConvs)
-
 	// Avisa que está pronto
 	fmt.Println("Ambiente pronto para uso!\n")
 }
@@ -50,7 +49,7 @@ func printJSON(input interface{}) string {
 
 // (CREATE) Cria convênio e salva no armazém
 func criaConvenio(conv convenio.Convenio) {
-	// Checa se já existe Convenio
+	// Checa se já existe Convenio pelo Nome
 	convs, err := armazenamento.GetConveniosByName(conv.NomeConv)
 	if err != nil {
 		fmt.Println("Erro:", err)
@@ -63,13 +62,13 @@ func criaConvenio(conv convenio.Convenio) {
 			fmt.Println("Convenio Criado e armazenado:", result)
 		}
 	} else {
-		fmt.Println("Convênio:\"" + conv.NomeConv + "\" já existe.")
+		fmt.Println("Convênio:\"" + conv.NomeConv + "\" já existe com o mesmo nome.")
 	}
 }
 
-// (READ-funcoesCRUD.go) Retorna um Vetor de Convenios passando como parâmetro o "Nome" do convênio.
+// (READ) Retorna um Vetor de Convenios passando como parâmetro o "Nome" do convênio.
 // Se o argumento "nome" = "*", retornará todos os convênios armazenados.
-func getConvenios(conv string) []convenio.Convenio {
+func getConveniosPorNome(conv string) []convenio.Convenio {
 	convs, err := armazenamento.GetConveniosByName(conv)
 	if err != nil {
 		fmt.Println("Erro:", err)
@@ -80,6 +79,20 @@ func getConvenios(conv string) []convenio.Convenio {
 		return nil
 	}
 	return convs
+}
+
+// (READ) Retorna um Convenio passando como parâmetro o "ID" do convênio.
+func getConvenioPorId(id primitive.ObjectID) convenio.Convenio {
+	conv, err := armazenamento.GetConvenioById(id)
+	if err != nil {
+		fmt.Println("Erro:", err)
+		return convenio.Convenio{}
+	}
+	if id == primitive.NilObjectID {
+		fmt.Println("Erro: Convênio: " + id.String() + " não encontrado.")
+		return convenio.Convenio{}
+	}
+	return conv
 }
 
 // (list) Retorna Lista de Convenios no formato Json ou Bson passando como parâmetro o "Nome" do convênio.
@@ -102,48 +115,79 @@ func listaConvenio(nome string, formato ...string) {
 
 // (UPDATE) Atualiza os Dados de um ou mais Convênio armazenado utilizando como parâmetro o Nome do Convênio("nome"),
 // o Struct do Novo Convênio("novoConv") e a opção de alterar Todos("todos") simultaneamente.
-func atualizaConv(nome string, novoConv convenio.Convenio, todos bool) {
-	// Checa se já existe Convenio
-	if nome == "" || novoConv.NomeConv == "" {
-		fmt.Println("Erro: Insira um nome de convênio válido para atualizar.")
+func atualizaConvPorNome(nome string, novoConv convenio.Convenio, todos bool) {
+	// Checa se o Nome do Convenio está vazio
+	if nome == "" {
+		fmt.Println("Erro: Nome do Convênio nulo/vazio.")
 	} else {
-		// Verifica se o convênio é válido
-		err := convenio.VerificarConvenio(novoConv)
+		// Executar um Merge de nos Obejetos para poder verificar o resultado
+		// convMerge :=
+		// // Verifica se o convênio é válido
+		// err := convenio.VerificarConvenio(novoConv)
+		var err error
 		if err != nil {
 			fmt.Println("Erro:", err)
 		} else {
 			// Atualiza os dados do Convênio
-			result, err := armazenamento.UpdateConvenio(nome, novoConv, todos)
+			result, err := armazenamento.UpdateConvenioByName(nome, novoConv, todos)
 			if err != nil {
 				fmt.Println("Erro:", err)
 			} else {
+				fmt.Println("Convenios encontrados:", result.MatchedCount)
 				fmt.Println("Convenios atualizados:", result.ModifiedCount)
 			}
 		}
 	}
 }
 
-// (DELETE) Deleta um Convênio específico ou mais de acordo com o Nome do Convênio usado como parâmetro de busca.
-// Para Deletar todos os Convênios da busca é possível utilizar o parâmetro Boleano "todos".
-func deletaConvenio(sconv string, todos bool) {
-	// Checa se existe algum Convenio com o padrão de Nome passado
-	convs, err := armazenamento.GetConveniosByName(sconv)
-	if err != nil {
-		fmt.Println("Errro:", err)
-	}
-	if convs != nil {
-		result, err := armazenamento.DeleteConvenio(sconv, todos)
+// (UPDATE) Atualiza os Dados de um Convênio armazenado utilizando como parâmetro o ID Convênio,
+func atualizaConvPorId(id primitive.ObjectID, novoConv convenio.Convenio) {
+	// Checa se o ID do Convenio está vazio
+	if id.IsZero() {
+		fmt.Println("Erro: ID nulo/vazio.")
+	} else {
+		// Atualiza os dados do Convênio
+		result, err := armazenamento.UpdateConvenioById(id, novoConv)
 		if err != nil {
 			fmt.Println("Erro:", err)
+		} else if result.ModifiedCount > 0 {
+			fmt.Println("Convenio atualizado:", id.String())
 		} else {
-			var p string
-			for _, s := range convs {
-				p += " " + s.NomeConv
-			}
-			fmt.Println("Convenios deletados:", result.DeletedCount, "("+strings.TrimSpace(p)+")")
+			fmt.Println("Convênio:\"" + id.String() + "\" não foi alterado ou não existe no Armazém.")
 		}
+	}
+}
+
+// (DELETE) Deleta um Convênio específico ou mais de um utilizando o Nome do Convênio como parâmetro de busca.
+// Para Deletar todos os Convênios da busca é possível utilizar o parâmetro Boleano "todos".
+func deletaConveniosPorNome(nome string, todos bool) {
+	// Checa se o Nome do Convenio está vazio
+	if nome == "" {
+		fmt.Println("Erro: Nome do Convênio nulo/vazio.")
 	} else {
-		fmt.Println("Convênio:\"" + sconv + "\" não existe no Armazém.")
+		result, err := armazenamento.DeleteConvenioByName(nome, todos)
+		if err != nil {
+			fmt.Println("Erro:", err)
+			fmt.Println("Provavel que o Convênio:\"" + nome + "\" não exista no Armazém.")
+		} else {
+			fmt.Println("Convenios deletados:", result.DeletedCount)
+		}
+	}
+}
+
+// (DELETE) Deleta um Convênio específico utilizando o ID do Convênio como parâmetro de busca.
+func deletaConvenioPorId(id primitive.ObjectID) {
+	// Checa se o Nome do Convenio está vazio
+	if id.IsZero() {
+		fmt.Println("Erro: ID nulo/vazio.")
+	} else {
+		result, err := armazenamento.DeleteConvenioById(id)
+		if err != nil {
+			fmt.Println("Erro:", err)
+			fmt.Println("Provavel que o Convênio:\"" + id.String() + "\" não exista no Armazém.")
+		} else {
+			fmt.Println("Convenios deletados:", result.DeletedCount)
+		}
 	}
 }
 

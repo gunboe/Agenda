@@ -60,8 +60,7 @@ func GetConvenioById(id primitive.ObjectID) (convenio.Convenio, error) {
 	// Definir o Banco e a Coleção de Dados
 	Convenios = Cliente.Database(common.ConfigInicial.ArmazemDatabase).Collection("Convenios")
 	// Cria os filtros adequados de pesquisa no MongoDB
-	var filter bson.M
-	filter = bson.M{"_id": id}
+	filter := bson.M{"_id": id}
 
 	// Cria um Convênio
 	var conv convenio.Convenio
@@ -73,9 +72,54 @@ func GetConvenioById(id primitive.ObjectID) (convenio.Convenio, error) {
 	return conv, nil
 }
 
+// Alterar um ou mais Convenios pelo Nome do Convênio
+// Ao passar a String "*" todos os registros filtrados serão alterados
+func UpdateConvenioByName(nome string, novoConv convenio.Convenio, todos bool) (*mongo.UpdateResult, error) {
+	// Definir o Banco e a Coleção de Dados
+	Convenios = Cliente.Database(common.ConfigInicial.ArmazemDatabase).Collection("Convenios")
+	// Cria os filtros adequados de pesquisa no MongoDB
+	var filter bson.M
+	if nome == "*" {
+		filter = bson.M{}
+	} else {
+		filter = bson.M{"nomeconv": primitive.Regex{Pattern: nome, Options: "i"}}
+	}
+	update := bson.M{"$set": novoConv}
+	var result *mongo.UpdateResult
+	var err error
+	if todos {
+		result, err = Convenios.UpdateMany(ctx, filter, update)
+	} else {
+		// fmt.Println("tentando atualizar:", update, " com o filtro:", filter)
+		result, err = Convenios.UpdateOne(ctx, filter, update)
+	}
+	if err != nil {
+		return nil, err
+	} else {
+		return result, nil
+	}
+}
+
+// Alterar os Compos de um Convenios pelo ID do Convênio
+func UpdateConvenioById(id primitive.ObjectID, novoConv convenio.Convenio) (*mongo.UpdateResult, error) {
+	// Definir o Banco e a Coleção de Dados
+	Convenios = Cliente.Database(common.ConfigInicial.ArmazemDatabase).Collection("Convenios")
+	// Cria os filtros adequados de pesquisa no MongoDB
+	filter := bson.M{"_id": id}
+	update := bson.M{"$set": novoConv}
+	var result *mongo.UpdateResult
+	var err error
+	result, err = Convenios.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return nil, err
+	} else {
+		return result, nil
+	}
+}
+
 // Deleta os Convênios de acordo com o "Nome" passado como parâmetro.
 // Se "todos" = "true", todos os Docs do filtro serão deletados.
-func DeleteConvenio(nome string, todos bool) (*mongo.DeleteResult, error) {
+func DeleteConvenioByName(nome string, todos bool) (*mongo.DeleteResult, error) {
 	// Definir o Banco e a Coleção de Dados
 	Convenios = Cliente.Database(common.ConfigInicial.ArmazemDatabase).Collection("Convenios")
 	// Inserir os Dados no contexto atual
@@ -85,7 +129,7 @@ func DeleteConvenio(nome string, todos bool) (*mongo.DeleteResult, error) {
 	if nome == "*" {
 		filter = bson.M{}
 	} else {
-		filter = bson.M{"plano": primitive.Regex{Pattern: nome, Options: "i"}}
+		filter = bson.M{"nomeconv": primitive.Regex{Pattern: nome, Options: "i"}}
 	}
 	var err error
 	if todos {
@@ -101,22 +145,19 @@ func DeleteConvenio(nome string, todos bool) (*mongo.DeleteResult, error) {
 	return result, nil
 }
 
-func UpdateConvenio(nomeConv string, novoConv convenio.Convenio, todos bool) (*mongo.UpdateResult, error) {
+// Deleta os Convênios de acordo com o "Nome" passado como parâmetro.
+func DeleteConvenioById(id primitive.ObjectID) (*mongo.DeleteResult, error) {
 	// Definir o Banco e a Coleção de Dados
 	Convenios = Cliente.Database(common.ConfigInicial.ArmazemDatabase).Collection("Convenios")
+	// Inserir os Dados no contexto atual
+	var result *mongo.DeleteResult
 	// Cria os filtros adequados de pesquisa no MongoDB
-	filter := bson.M{"plano": primitive.Regex{Pattern: nomeConv, Options: "i"}}
-	update := bson.M{"$set": novoConv}
-	var result *mongo.UpdateResult
+	filter := bson.M{"_id": id}
 	var err error
-	if todos {
-		result, err = Convenios.UpdateMany(ctx, filter, update)
-	} else {
-		result, err = Convenios.UpdateOne(ctx, filter, update)
-	}
+	result, err = Convenios.DeleteOne(ctx, filter)
 	if err != nil {
 		return nil, err
-	} else {
-		return result, nil
 	}
+	// Retornar o resultado
+	return result, nil
 }
