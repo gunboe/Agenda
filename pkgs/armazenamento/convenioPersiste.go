@@ -1,3 +1,4 @@
+// PERSISTÊNCIA: Convenios
 package armazenamento
 
 import (
@@ -9,10 +10,10 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-// CRUD Convenios
-
-// Criar Convênios para serem utilizados nos Planos de Saude.
+// (CREATE) Criar Convênios para serem utilizados nos Planos de Pagamentos.
 func CreateConvenio(cv convenio.Convenio) (interface{}, error) {
+	//
+	// cv.SetConvDisponivel()
 	// Antes de qq coisa, verificar os dados do Convenio.
 	err := convenio.VerificarConvenio(cv)
 	if err != nil {
@@ -29,7 +30,7 @@ func CreateConvenio(cv convenio.Convenio) (interface{}, error) {
 	return result.InsertedID, nil
 }
 
-// Ler/Retorna Convênios, retorna uma lista de Convênios ao passar uma String independete de Caixa/Baixa.
+// (READ) Ler/Retorna Lista de Convênios buscando por Nome independete de Caixa/Baixa.
 // A String "*" indica todos os Convênios.
 func GetConveniosByName(nome string) ([]convenio.Convenio, error) {
 	// Definir o Banco e a Coleção de Dados
@@ -55,13 +56,12 @@ func GetConveniosByName(nome string) ([]convenio.Convenio, error) {
 	return convs, nil
 }
 
-// Ler/Retorna Convênios, retorna um Convênio por ID
+// (READ) Ler/Retorna Convênios por ID
 func GetConvenioById(id primitive.ObjectID) (convenio.Convenio, error) {
 	// Definir o Banco e a Coleção de Dados
 	Convenios = Cliente.Database(common.ConfigInicial.ArmazemDatabase).Collection("Convenios")
 	// Cria os filtros adequados de pesquisa no MongoDB
 	filter := bson.M{"_id": id}
-
 	// Cria um Convênio
 	var conv convenio.Convenio
 	// Alinha o cursor de busca
@@ -72,7 +72,7 @@ func GetConvenioById(id primitive.ObjectID) (convenio.Convenio, error) {
 	return conv, nil
 }
 
-// Alterar um ou mais Convenios pelo Nome do Convênio
+// (UPDATE) Atualiza um ou mais Convenios pelo Nome do Convênio
 // Ao passar a String "*" todos os registros filtrados serão alterados
 func UpdateConvenioByName(nome string, novoConv convenio.Convenio, todos bool) (*mongo.UpdateResult, error) {
 	// Definir o Banco e a Coleção de Dados
@@ -100,22 +100,43 @@ func UpdateConvenioByName(nome string, novoConv convenio.Convenio, todos bool) (
 	}
 }
 
-// Alterar os Compos de um Convenios pelo ID do Convênio
+// (UPDATE) Atualiza os Compos de um Convenios pelo ID do Convênio
 func UpdateConvenioById(id primitive.ObjectID, novoConv convenio.Convenio) (*mongo.UpdateResult, error) {
 	// Definir o Banco e a Coleção de Dados
 	Convenios = Cliente.Database(common.ConfigInicial.ArmazemDatabase).Collection("Convenios")
 	// Cria os filtros adequados de pesquisa no MongoDB
-	filter := bson.M{"_id": id}
+	// filter := bson.M{"_id": id}
 	update := bson.M{"$set": novoConv}
 	var result *mongo.UpdateResult
 	var err error
-	result, err = Convenios.UpdateOne(ctx, filter, update)
+	result, err = Convenios.UpdateByID(ctx, id, update)
 	if err != nil {
 		return nil, err
 	} else {
 		return result, nil
 	}
 }
+
+// // (UPDATE) Indisponibiliza um Convenios pelo ID
+// func SetConvIndisponivelById(id primitive.ObjectID) (*mongo.UpdateResult, error) {
+// 	// Altera o valor do campo indisponivel
+// 	var novoConv convenio.Convenio
+// 	novoConv.ID = id
+// 	novoConv.SetConvIndisponivel()
+// 	// Definir o Banco e a Coleção de Dados
+// 	Convenios = Cliente.Database(common.ConfigInicial.ArmazemDatabase).Collection("Convenios")
+// 	// Cria os filtros adequados de pesquisa no MongoDB
+// 	filter := bson.M{"_id": id}
+// 	update := bson.M{"$set": novoConv}
+// 	var result *mongo.UpdateResult
+// 	var err error
+// 	result, err = Convenios.UpdateOne(ctx, filter, update)
+// 	if err != nil {
+// 		return nil, err
+// 	} else {
+// 		return result, nil
+// 	}
+// }
 
 // Deleta os Convênios de acordo com o "Nome" passado como parâmetro.
 // Se "todos" = "true", todos os Docs do filtro serão deletados.

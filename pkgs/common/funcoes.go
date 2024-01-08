@@ -44,3 +44,24 @@ func CPFvalido(cpf string) bool {
 	// Verificar se os dígitos verificadores são iguais aos dígitos fornecidos
 	return digitoVerificador1 == int(cpf[9]-'0') && digitoVerificador2 == int(cpf[10]-'0')
 }
+
+// Verifica se o Email é válido
+func EmailValido(email string) bool {
+	// Expressão regular para verificar o formato de e-mail
+	emailRegex := `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
+
+	// Compilação
+	re := regexp.MustCompile(emailRegex)
+
+	// Verificação se a string está no formato de e-mail
+	return re.MatchString(email)
+}
+
+// Verifica se o NrTelefone é válido
+func NrCelValido(cel int64) bool {
+	// Verifica se o número de telefone tem 11 dígitos
+	if len(strconv.FormatInt(cel, 10)) != 11 {
+		return false
+	}
+	return true
+}

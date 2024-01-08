@@ -12,8 +12,8 @@ type PlanoPgto struct {
 	ConvenioId   primitive.ObjectID `bson:"convenio,omitempty"`
 	NrPlano      string             `bson:"nr_plano,omitempty"`
 	DataValidade time.Time          `bson:"data_validade_plano,omitempty"`
-	Ativo        bool               `bson:"ativo,omitempty"`
-	Particular   bool               `bson:"particular,omitempty"`
+	Inativo      bool               `bson:"inativo"`    // Default: Inativo=FALSE(NIL)    -> Ativo
+	Particular   bool               `bson:"particular"` // Default: Particular=FALSE(NIL) -> Privado
 }
 
 // Checar Planos em Convênios
@@ -21,7 +21,7 @@ type PlanoPgto struct {
 // os campos do Plano de Pagamento devem ficar em Vazios/Zerados
 func VerificarPlano(plano PlanoPgto) error {
 	// Verifica os campos
-	if !plano.Ativo {
+	if plano.Inativo {
 		return errors.New("Plano não está ativo!!")
 	}
 	if plano.Particular {
@@ -34,9 +34,6 @@ func VerificarPlano(plano PlanoPgto) error {
 		}
 		if plano.DataValidade.Before(time.Now()) {
 			return errors.New("Data de validade. Plano de Pagamento está vencido.")
-		}
-		if plano.Ativo == false {
-			return errors.New("Plano de Pagamento não está ativo.")
 		}
 	}
 	return nil

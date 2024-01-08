@@ -8,19 +8,23 @@ import (
 )
 
 type Convenio struct {
-	ID               primitive.ObjectID `bson:"_id,omitempty""`
+	ID               primitive.ObjectID `bson:"_id,omitempty"`
 	NomeConv         string             `bson:"nomeconv,omitempty"`
 	Endereco         string             `bson:"endereco,omitempty"`
 	DataContratoConv time.Time          `bson:"data_contrato_conv,omitempty"`
-	Disponivel       bool               `bson:"disponivel"`
+	Indisponivel     bool               `bson:"indisponivel"` // Default: Indisponível=FALSE(NIL) -> Disponível
 }
 
 // Checar convenios
 func VerificarConvenio(conv Convenio) error {
 	// Verificar se os campos do convênio qualquer não estão zerados
-	if conv.NomeConv == "" || conv.Endereco == "" || conv.DataContratoConv.IsZero() {
-		return errors.New("Nome, Endereço, Data do Contrato ou Disponibilidade do Convêncio vazia/zerada/falso.")
-	} else if !conv.Disponivel {
+	if conv.NomeConv == "" {
+		return errors.New("Nome do Convêncio está vazio.")
+	} else if conv.Endereco == "" {
+		return errors.New("Endereço do Convêncio está vazia.")
+	} else if conv.DataContratoConv.IsZero() {
+		return errors.New("Data do Contrato do Convêncio está zerada.")
+	} else if conv.Indisponivel {
 		return errors.New("Convenio não está mais disponível.")
 	} else if conv.DataContratoConv.Before(time.Now()) {
 		return errors.New("Convênio está com a data de contrato vencida.")
