@@ -87,7 +87,7 @@ func GetPacienteByCPF(cpf string) (paciente.Paciente, error) {
 	return pac, nil
 }
 
-// (UPDATE) Atualiza um ou mais Pacientes pelo Nome do Paciente
+// (UPDATE) Atualiza um ou mais Pacientes pelo Nome do Paciente. Se não encontrar um Paciente NÃO retorna erro.
 // Ao passar a String "*" todos os registros filtrados serão alterados
 func UpdatePacienteByName(nome string, novoPac paciente.Paciente, todos bool) (*mongo.UpdateResult, error) {
 	// Definir o Banco e a Coleção de Dados
@@ -115,13 +115,30 @@ func UpdatePacienteByName(nome string, novoPac paciente.Paciente, todos bool) (*
 	}
 }
 
-// (UPDATE) Atualiza os Compos de um Pacientes pelo ID do Convênio
+// (UPDATE) Atualiza os Compos de um Pacientes pelo ID do Convênio. Se não encontrar um Paciente NÃO retorna erro.
 func UpdatePacienteById(id primitive.ObjectID, novoPac paciente.Paciente) (*mongo.UpdateResult, error) {
 	// Definir o Banco e a Coleção de Dados
 	Pacientes = Cliente.Database(common.ConfigInicial.ArmazemDatabase).Collection("Pacientes")
 	// Cria os filtros adequados de pesquisa no MongoDB
 	// filter := bson.M{"_id": id}
 	update := bson.M{"$set": novoPac}
+	var result *mongo.UpdateResult
+	var err error
+	result, err = Pacientes.UpdateByID(ctx, id, update)
+	if err != nil {
+		return nil, err
+	} else {
+		return result, nil
+	}
+}
+
+// (UPDATE) Besbloquear um Paciente por ID. Quando um Paciente está marcado como Bloqueado,
+// ele não pode ser alterado nem utilizado em Agendamentos. Se não encontrar um Convênio NÃO retorna erro.
+func AllowPacienteById(id primitive.ObjectID, b bool) (*mongo.UpdateResult, error) {
+	// Definir o Banco e a Coleção de Dados
+	Pacientes = Cliente.Database(common.ConfigInicial.ArmazemDatabase).Collection("Pacientes")
+	// Define o valor a ser atualizado
+	update := bson.M{"$set": bson.M{"bloqueado": !b}}
 	var result *mongo.UpdateResult
 	var err error
 	result, err = Pacientes.UpdateByID(ctx, id, update)

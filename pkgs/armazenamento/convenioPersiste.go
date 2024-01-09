@@ -56,7 +56,7 @@ func GetConveniosByName(nome string) ([]convenio.Convenio, error) {
 	return convs, nil
 }
 
-// (READ) Ler/Retorna Convênios por ID
+// (READ) Ler/Retorna Convênios por ID, se não encontrar retorna Erro do Mongo.
 func GetConvenioById(id primitive.ObjectID) (convenio.Convenio, error) {
 	// Definir o Banco e a Coleção de Dados
 	Convenios = Cliente.Database(common.ConfigInicial.ArmazemDatabase).Collection("Convenios")
@@ -72,8 +72,8 @@ func GetConvenioById(id primitive.ObjectID) (convenio.Convenio, error) {
 	return conv, nil
 }
 
-// (UPDATE) Atualiza um ou mais Convenios pelo Nome do Convênio
-// Ao passar a String "*" todos os registros filtrados serão alterados
+// (UPDATE) Atualiza um ou mais Convenios pelo Nome do Convênio. Se não encontrar um Convênio NÃO retorna erro.
+// Ao passar a String "*" todos os registros filtrados serão alterados.
 func UpdateConvenioByName(nome string, novoConv convenio.Convenio, todos bool) (*mongo.UpdateResult, error) {
 	// Definir o Banco e a Coleção de Dados
 	Convenios = Cliente.Database(common.ConfigInicial.ArmazemDatabase).Collection("Convenios")
@@ -100,7 +100,7 @@ func UpdateConvenioByName(nome string, novoConv convenio.Convenio, todos bool) (
 	}
 }
 
-// (UPDATE) Atualiza os Compos de um Convenios pelo ID do Convênio
+// (UPDATE) Atualiza os Compos de um Convenios pelo ID do Convênio. Se não encontrar um Convênio NÃO retorna erro.
 func UpdateConvenioById(id primitive.ObjectID, novoConv convenio.Convenio) (*mongo.UpdateResult, error) {
 	// Definir o Banco e a Coleção de Dados
 	Convenios = Cliente.Database(common.ConfigInicial.ArmazemDatabase).Collection("Convenios")
@@ -117,28 +117,24 @@ func UpdateConvenioById(id primitive.ObjectID, novoConv convenio.Convenio) (*mon
 	}
 }
 
-// // (UPDATE) Indisponibiliza um Convenios pelo ID
-// func SetConvIndisponivelById(id primitive.ObjectID) (*mongo.UpdateResult, error) {
-// 	// Altera o valor do campo indisponivel
-// 	var novoConv convenio.Convenio
-// 	novoConv.ID = id
-// 	novoConv.SetConvIndisponivel()
-// 	// Definir o Banco e a Coleção de Dados
-// 	Convenios = Cliente.Database(common.ConfigInicial.ArmazemDatabase).Collection("Convenios")
-// 	// Cria os filtros adequados de pesquisa no MongoDB
-// 	filter := bson.M{"_id": id}
-// 	update := bson.M{"$set": novoConv}
-// 	var result *mongo.UpdateResult
-// 	var err error
-// 	result, err = Convenios.UpdateOne(ctx, filter, update)
-// 	if err != nil {
-// 		return nil, err
-// 	} else {
-// 		return result, nil
-// 	}
-// }
+// (UPDATE) Disponibilizar um Convênio por ID. Quando um Convênio está marcado como Indisponivel,
+// ele não pode ser alterado nem utilizado em PlanosPgto. Se não encontrar um Convênio NÃO retorna erro.
+func AllowConveioById(id primitive.ObjectID, b bool) (*mongo.UpdateResult, error) {
+	// Definir o Banco e a Coleção de Dados
+	Convenios = Cliente.Database(common.ConfigInicial.ArmazemDatabase).Collection("Convenios")
+	// Define o valor a ser atualizado
+	update := bson.M{"$set": bson.M{"indisponivel": !b}}
+	var result *mongo.UpdateResult
+	var err error
+	result, err = Convenios.UpdateByID(ctx, id, update)
+	if err != nil {
+		return nil, err
+	} else {
+		return result, nil
+	}
+}
 
-// Deleta os Convênios de acordo com o "Nome" passado como parâmetro.
+// (DELETE) Deleta os Convênios de acordo com o "Nome" passado como parâmetro.
 // Se "todos" = "true", todos os Docs do filtro serão deletados.
 func DeleteConvenioByName(nome string, todos bool) (*mongo.DeleteResult, error) {
 	// Definir o Banco e a Coleção de Dados

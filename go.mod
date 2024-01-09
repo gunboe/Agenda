@@ -3,6 +3,7 @@ module Agenda
 go 1.18
 
 require (
+	dario.cat/mergo v1.0.0
 	github.com/go-ini/ini v1.67.0
 	go.mongodb.org/mongo-driver v1.13.1
 	gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22
