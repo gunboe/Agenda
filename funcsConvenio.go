@@ -2,11 +2,11 @@ package main
 
 import (
 	"Agenda/pkgs/armazenamento"
+	"Agenda/pkgs/common"
 	"Agenda/pkgs/convenio"
 	"fmt"
 	"strings"
 
-	"dario.cat/mergo"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -20,11 +20,16 @@ const Convenio = "Convênio"
 // (CREATE) Cria convênio e salva no armazém
 func criaConvenio(conv convenio.Convenio) {
 	// Verifica o Convenio
-
+	err := convenio.ChecarConvenio(conv)
+	if err != nil {
+		fmt.Println("Erro:("+Convenio+")", err)
+		return
+	}
 	// Checa se já existe Convenio pelo Nome
 	convs, err := armazenamento.GetConveniosByName(conv.NomeConv)
 	if err != nil {
 		fmt.Println("Erro:("+Convenio+")", err)
+		return
 	}
 	if convs == nil {
 		result, err := armazenamento.CreateConvenio(conv)
@@ -54,17 +59,13 @@ func getConveniosPorNome(conv string) []convenio.Convenio {
 }
 
 // (READ) Retorna um Convenio passando como parâmetro o "ID" do convênio.
-func getConvenioPorId(id primitive.ObjectID) convenio.Convenio {
+// Se não encontrar retorna Convênio Zerado.
+func getConvenioPorId(id primitive.ObjectID) (convenio.Convenio, error) {
 	conv, err := armazenamento.GetConvenioById(id)
 	if err != nil {
-		fmt.Println("Erro:("+Convenio+")", err)
-		return convenio.Convenio{}
+		return convenio.Convenio{}, err
 	}
-	if id == primitive.NilObjectID {
-		fmt.Println("Erro: Convênio: " + id.String() + " não encontrado.")
-		return convenio.Convenio{}
-	}
-	return conv
+	return conv, nil
 }
 
 // (list) Retorna Lista de Convenios no formato Json ou Bson passando como parâmetro o "Nome" do convênio.
@@ -79,7 +80,7 @@ func listaConvenio(nome string, formato ...string) {
 			fmt.Println("lista de Convênios:\n", convs)
 			// Caso contrário, use por padrão "Json"
 		} else {
-			fmt.Println("lista de Convênios:\n", printJSON(convs))
+			fmt.Println("lista de Convênios:\n", common.PrintJSON(convs))
 		}
 	}
 }
@@ -108,18 +109,20 @@ func atualizaConvPorNome(nome string, novoConv convenio.Convenio, todos bool) {
 	}
 }
 
-// (UPDATE) Atualiza os Dados de um Convênio armazenado utilizando como parâmetro o ID Convênio,
+// (UPDATE) Atualiza os Dados de um Convênio armazenado utilizando como parâmetro o ID do Convênio
+// e um novo Convênio com TODOS os atributos para serem checados antes de atualizados no Armazem.
 func atualizaConvPorId(id primitive.ObjectID, novoConv convenio.Convenio) {
-	// Pega o Conv a ser alterado
-	conv, err := armazenamento.GetConvenioById(id)
-	if err != nil {
-		fmt.Println("Erro:("+Convenio+")", err)
-		return
-	}
-	// Faz o Merge com as alterações
-	mergo.Merge(&novoConv, conv)
+	var err error
+	// // Pega o Conv a ser alterado
+	// conv, err := armazenamento.GetConvenioById(id)
+	// if err != nil {
+	// 	fmt.Println("Erro:("+Convenio+")", err)
+	// 	return
+	// }
+	// // Faz o Merge com as alterações
+	// mergo.Merge(&novoConv, conv)
 	// Testa as alterações estão em conformidade
-	err = convenio.VerificarConvenio(novoConv)
+	err = convenio.ChecarConvenio(novoConv)
 	if err != nil {
 		fmt.Println("Erro:("+Convenio+")", err)
 		return
@@ -131,7 +134,7 @@ func atualizaConvPorId(id primitive.ObjectID, novoConv convenio.Convenio) {
 	} else if result.ModifiedCount > 0 {
 		fmt.Println("Convenio atualizado:", id.String())
 	} else {
-		fmt.Println("Convênio:\"" + id.String() + "\" não foi alterado ou não existe no Armazém.")
+		fmt.Println("Convênio:\"" + id.String() + "\" não foi alterado no Armazém.")
 	}
 }
 
@@ -182,13 +185,5 @@ func deletaConvenioPorId(id primitive.ObjectID) {
 		} else {
 			fmt.Println("Convenios deletados:", result.DeletedCount)
 		}
-	}
-}
-
-// (Check) Verifica se o Convênio está com os atributos corretos
-func VerificaConvenio(conv convenio.Convenio) {
-	err := convenio.VerificarConvenio(conv)
-	if err != nil {
-		fmt.Println("Erro:("+Convenio+")", err)
 	}
 }

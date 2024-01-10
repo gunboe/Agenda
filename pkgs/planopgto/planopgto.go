@@ -16,23 +16,25 @@ type PlanoPgto struct {
 	Particular   bool               `bson:"particular"` // Default: Particular=FALSE(NIL) -> Privado
 }
 
-// Checar Planos em Convênios
-// Caso o Plano de Pagamento a ser utilizado seja "Particular",
-// os campos do Plano de Pagamento devem ficar em Vazios/Zerados
-func VerificarPlano(plano PlanoPgto) error {
+// (Check) Verifica se Plano de Pagamento está com os atributos corretos, mas NÃO verifica no Armazém.
+// Caso o Plano de Pagamento seja "Particular", os campos  devem ficar em Vazios/Zerados.
+func ChecarPlanoPgto(plano PlanoPgto) error {
 	// Verifica os campos
 	if plano.Inativo {
 		return errors.New("Plano não está ativo!!")
 	}
 	if plano.Particular {
 		if !plano.ConvenioId.IsZero() || plano.NrPlano != "" || !plano.DataValidade.IsZero() {
-			return errors.New("ConvenioID, NrPlano, DataValidade ou Ativo não está(ão) vazio(s).\nPara Plano Particular todos esses campos devem estar vazios/nulos.")
+			return errors.New("Para Plano \"Particular\" os campos ID, NrPlano e DataValidade do Convênio devem estar vazios/zerados.")
 		}
 	} else {
-		if plano.NrPlano == "" || plano.DataValidade.IsZero() {
+		if plano.ID.IsZero() {
+			return errors.New("Object ID (_id) do Plano está zerado.")
+		} else if plano.ConvenioId.IsZero() {
+			return errors.New("O Id do Convênio do Plano (ConvenioID) está zerado.")
+		} else if plano.NrPlano == "" || plano.DataValidade.IsZero() {
 			return errors.New("Nr do Plano ou Data de validade do Plano de Pagamento está(ão) vazio(s).")
-		}
-		if plano.DataValidade.Before(time.Now()) {
+		} else if plano.DataValidade.Before(time.Now()) {
 			return errors.New("Data de validade. Plano de Pagamento está vencido.")
 		}
 	}

@@ -1,8 +1,9 @@
 package main
 
 import (
-	"Agenda/pkgs/convenio"
+	"Agenda/pkgs/planopgto"
 	"fmt"
+	"os"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -20,9 +21,9 @@ func main() {
 	// var err error
 
 	// Inicialização de algumas variáveis pra teste da Estrutra de Dados
-	// var d0, _ = time.Parse("02/01/2006", "22/06/2023")
-	// var d1, _ = time.Parse("02/01/2006", "25/05/2025")
-	// var d2, _ = time.Parse("02/01/2006", "07/07/2027")
+	// var d, _ = time.Parse("02/01/2006", "22/06/2023")
+	var d, _ = time.Parse("02/01/2006", "25/05/2025")
+	// var d, _ = time.Parse("02/01/2006", "07/07/2027")
 	// var dur, _ = time.ParseDuration("1h")
 
 	// Inicializa Convênio e Plano
@@ -45,21 +46,25 @@ func main() {
 
 	// Antes de criar o Plano de Pagamento deve-se, obter o Convenio cadastrado no Mongo
 	//convTeste = getConvenios("sul")[0]
-	//Cria um Plano
-	// id, _ := primitive.ObjectIDFromHex("65998064fab6d835ca0f5a5e")
+	//Cria um Plano CASSI
+	// id, _ := primitive.ObjectIDFromHex("65998064fab6d835ca0f5a5e") //
 	// planoX := planopgto.PlanoPgto{ID: primitive.NewObjectID(), ConvenioId: id,
-	// 	NrPlano: "00000-01", DataValidade: d1, Inativo: false, Particular: false}
+	// 	NrPlano: "00000-01", DataValidade: d, Inativo: false, Particular: false}
 	// planoParticular := planopgto.PlanoPgto{Particular: true}
 
-	// VerificaPlanoPgto(planoX)
-	// VerificaPlanoPgto(planoParticular)
+	// // fmt.Println("Checa PalnoX:", planopgto.ChecarPlanoPgto(planoX))
+	// // fmt.Println("Checa PalnoParticular:", planopgto.ChecarPlanoPgto(planoParticular))
 
-	// Criadno Paciente com um PlanoPgto
+	// // Criadno Paciente com um PlanoPgto
 	// var pacienteA = paciente.Paciente{ID: primitive.NewObjectID(), Nome: "Gunther boeckmann", CPF: "891552974-04",
 	// 	NrCelular: 81999998888, Email: "biel@net.io", Endereco: "",
 	// 	Bloqueado: false}
 	// pacienteA.PlanosPgts = append(pacienteA.PlanosPgts, planoX)
 	// pacienteA.PlanosPgts = append(pacienteA.PlanosPgts, planoParticular)
+
+	// // fmt.Println("Checa PacienteA:", paciente.ChecarPaciente(pacienteA))
+	// // fmt.Println(printJSON(pacienteA))
+	// criaPaciente(pacienteA)
 
 	// var pacienteB = paciente.Paciente{ID: primitive.NewObjectID(), Nome: "Guisela Silva", CPF: "194630144-20",
 	// 	NrCelular: 81999998888, Email: "guiga@net.io", Endereco: "SolMAr, 47",
@@ -74,17 +79,36 @@ func main() {
 	// }
 
 	// fmt.Println(printJSON(pacienteB))
-	// criaPaciente(pacienteA)
 	// criaPaciente(pacienteB)
 
 	// Alterando Paciente
-	// idpac, _ := primitive.ObjectIDFromHex("659b5ca4c49b25be1771dcd")
+	idpac, _ := primitive.ObjectIDFromHex("659d857381f0a20d852d7b39") // Pac: Gunther
 	// HabilitePacPorId(idpac, true)
-	// // planoNovo := planopgto.PlanoPgto{Ativo: false}
-	// // pacienteA.PlanosPgts[0] = planoNovo
-	// pacienteA.Endereco = "Rua qq"
+	pacienteA, err := getPacientePorId(idpac)
+	if err != nil {
+		fmt.Println("Não encotrou CPF:", pacienteA.ID, " Saindo...")
+
+		os.Exit(1)
+	}
+	convenioId, _ := primitive.ObjectIDFromHex("65998064fab6d835ca0f5a62")
+	// pID := primitive.NewObjectID()
+	pID, _ := primitive.ObjectIDFromHex("659de2c86c357efadababe38")
+	plano := planopgto.PlanoPgto{ID: pID, ConvenioId: convenioId, NrPlano: "00000-0", DataValidade: d}
+	// plano := planopgto.PlanoPgto{Particular: true}
+	// Adicionando novo plano
+	// pacienteA.PlanosPgts = append(pacienteA.PlanosPgts, plano)
 	// pacienteA.ID = idpac
-	// atualizaPacPorId(pacienteA.ID, pacienteA)
+	// atualizaPacPorId(idpac, pacienteA)
+	// listaPaciente("gunt")
+
+	// Deletetando Plano do Paciente
+	DelPlanoPgtoPaciente(idpac, plano)
+	// Inserindo Plano do Paciente
+	// InsPlanoPgtoPaciente(idpac, plano)
+
+	// Deletando Paciente
+	// idpac, _ := primitive.ObjectIDFromHex("659b5cddfda4bbbe7de29781") // Pac: Gunther
+	// deletaPacientePorId(idpac)
 
 	// var ag = agente.Agente{Nome: "Elke", CPF: "001.038.719-32", NrCelular: 123456798, Especialidades: []string{"Endocrino", "Clinico"}}
 	// err = ag.SetSecret("senha123")
@@ -139,19 +163,19 @@ func main() {
 	// atualizaConv("PARticula", convTeste, todos)
 
 	// var d, _ = time.Parse("02/01/2006", "22/06/2023")
-	var d, _ = time.Parse("02/01/2006", "25/05/2025")
+	// var d, _ = time.Parse("02/01/2006", "25/05/2025")
 	// var d, _ = time.Parse("02/01/2006", "07/07/2027")
 
-	// Alterando Convenio
-	ConvAlterado := convenio.Convenio{}
-	ID, _ := primitive.ObjectIDFromHex("65998064fab6d835ca0f5a6")
-	ConvAlterado = convenio.Convenio{DataContratoConv: d, Endereco: "Rua das Nações,1003"}
-	fmt.Println("ConvAlterado antes:", ConvAlterado)
+	// // Alterando Convenio
+	// ConvAlterado := convenio.Convenio{}
+	// ID, _ := primitive.ObjectIDFromHex("65998064fab6d835ca0f5a62") //Sul America
+	// ConvAlterado = convenio.Convenio{ID: ID, NomeConv: "Sul da America", DataContratoConv: d, Endereco: "Rua das Creolas, 467"}
+	// // fmt.Println("ConvAlterado antes:", ConvAlterado)
 
-	atualizaConvPorId(ID, ConvAlterado)
+	// atualizaConvPorId(ID, ConvAlterado)
 	// HabiliteConvPorId(ID, true)
 
-	listaConvenio("sul")
+	// listaConvenio("sul")
 
 	// atualizaConvPorNome("CASSI", ConvAlterado, false)
 	// novoConvs := getConvenioPorId(ID)

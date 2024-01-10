@@ -2,7 +2,6 @@ package main
 
 import (
 	"Agenda/pkgs/common"
-	"encoding/json"
 	"fmt"
 	"strings"
 )
@@ -38,10 +37,4 @@ func inicializaAmbiente() {
 
 	// Avisa que está pronto
 	fmt.Println("Ambiente pronto para uso!\n")
-}
-
-// Converter struct para Json
-func printJSON(input interface{}) string {
-	s, _ := json.MarshalIndent(input, "", "\t")
-	return string(s)
 }

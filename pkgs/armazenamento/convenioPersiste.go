@@ -12,10 +12,8 @@ import (
 
 // (CREATE) Criar Convênios para serem utilizados nos Planos de Pagamentos.
 func CreateConvenio(cv convenio.Convenio) (interface{}, error) {
-	//
-	// cv.SetConvDisponivel()
 	// Antes de qq coisa, verificar os dados do Convenio.
-	err := convenio.VerificarConvenio(cv)
+	err := convenio.ChecarConvenio(cv)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +54,7 @@ func GetConveniosByName(nome string) ([]convenio.Convenio, error) {
 	return convs, nil
 }
 
-// (READ) Ler/Retorna Convênios por ID, se não encontrar retorna Erro do Mongo.
+// (READ) Ler/Retorna Convênios por ID. Se não encontrar retorna um Erro e um Convenio com atributos zerados.
 func GetConvenioById(id primitive.ObjectID) (convenio.Convenio, error) {
 	// Definir o Banco e a Coleção de Dados
 	Convenios = Cliente.Database(common.ConfigInicial.ArmazemDatabase).Collection("Convenios")
@@ -105,7 +103,6 @@ func UpdateConvenioById(id primitive.ObjectID, novoConv convenio.Convenio) (*mon
 	// Definir o Banco e a Coleção de Dados
 	Convenios = Cliente.Database(common.ConfigInicial.ArmazemDatabase).Collection("Convenios")
 	// Cria os filtros adequados de pesquisa no MongoDB
-	// filter := bson.M{"_id": id}
 	update := bson.M{"$set": novoConv}
 	var result *mongo.UpdateResult
 	var err error

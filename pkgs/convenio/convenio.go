@@ -16,10 +16,12 @@ type Convenio struct {
 }
 
 // Checar convenios
-func VerificarConvenio(conv Convenio) error {
+func ChecarConvenio(conv Convenio) error {
 	// Verificar se os campos do convênio qualquer não estão zerados
-	if conv.NomeConv == "" {
-		return errors.New("Nome do Convêncio está vazio.")
+	if conv.ID.IsZero() {
+		return errors.New("ID do Convênio está zerado.")
+	} else if conv.NomeConv == "" {
+		return errors.New("Nome do Convênio está vazio.")
 	} else if conv.Endereco == "" {
 		return errors.New("Endereço do Convêncio está vazia.")
 	} else if conv.DataContratoConv.IsZero() {

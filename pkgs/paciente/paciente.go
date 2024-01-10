@@ -23,7 +23,7 @@ type Paciente struct {
 }
 
 // Função de Validação do Paciente
-func VerificarPaciente(pac Paciente) error {
+func ChecarPaciente(pac Paciente) error {
 	if pac.Bloqueado {
 		return errors.New("Paciente (" + pac.Nome + ") está Bloqueado, consulte as observações do Paciente.")
 	}
@@ -35,6 +35,13 @@ func VerificarPaciente(pac Paciente) error {
 		return errors.New("NrCelular no formato inválido.")
 	} else if pac.Email != "" && !common.EmailValido(pac.Email) {
 		return errors.New("Email no formato inválido.")
+	}
+	// TODO (TESTAR) Verificar os PlanosPgto dele
+	for _, v := range pac.PlanosPgts {
+		err := planopgto.ChecarPlanoPgto(v)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

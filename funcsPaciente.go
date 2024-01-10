@@ -2,13 +2,13 @@ package main
 
 import (
 	"Agenda/pkgs/armazenamento"
-	"Agenda/pkgs/convenio"
+	"Agenda/pkgs/common"
 	"Agenda/pkgs/paciente"
 	"Agenda/pkgs/planopgto"
+	"errors"
 	"fmt"
 	"strings"
 
-	"dario.cat/mergo"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -22,27 +22,22 @@ const Paciente = "Paciente"
 // (CREATE) Cria Paciente e salva no armazém
 func criaPaciente(pac paciente.Paciente) {
 	var err error
-	// TODO: Checar PlanoPgto dupĺicado!!
-	// Checa o PlanoPagto do Paciente
+	//
+	// TODO: Checar PlanoPgto dupĺicado neste Paciente!!
+	// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+	//
+
+	// Checas os PlanoPagtos do Paciente
 	for _, v := range pac.PlanosPgts {
 		// Checa os Atributos do PlanoPgto
-		err = planopgto.VerificarPlano(v)
+		err = ChecaTodoPlanoPgto(v)
 		if err != nil {
 			fmt.Println("Erro:("+Paciente+")", err)
-			fmt.Println("Plano:", printJSON(v))
 			return
-		}
-		// Checa os Atributos do Convênio que seja Particular
-		if !v.Particular {
-			err = convenio.VerificarConvenio(getConvenioPorId(v.ConvenioId))
-			if err != nil {
-				fmt.Println("Erro:("+Paciente+")", err)
-				return
-			}
 		}
 	}
 	// Verifica o Paciente
-	err = paciente.VerificarPaciente(pac)
+	err = paciente.ChecarPaciente(pac)
 	if err != nil {
 		fmt.Println("Erro:("+Paciente+")", err)
 		return
@@ -78,18 +73,13 @@ func getPacientesPorNome(pac string) []paciente.Paciente {
 	return pacs
 }
 
-// (READ) Retorna um Paciente passando como parâmetro o "ID" do Paciente.
-func getPacientePorId(id primitive.ObjectID) paciente.Paciente {
+// (READ) Retorna um Paciente passando como parâmetro o "ID" do Paciente. Se não encontrar retorna Paciente Zerado.
+func getPacientePorId(id primitive.ObjectID) (paciente.Paciente, error) {
 	pac, err := armazenamento.GetPacienteById(id)
 	if err != nil {
-		fmt.Println("Erro:("+Paciente+")", err)
-		return paciente.Paciente{}
+		return paciente.Paciente{}, err
 	}
-	if id == primitive.NilObjectID {
-		fmt.Println("Erro: Paciente: " + id.String() + " não encontrado.")
-		return paciente.Paciente{}
-	}
-	return pac
+	return pac, nil
 }
 
 // (list) Retorna Lista de Pacientes no formato Json ou Bson passando como parâmetro o "Nome" do Paciente.
@@ -105,7 +95,7 @@ func listaPaciente(nome string, formato ...string) {
 			fmt.Println("lista de Pacientes:\n", pacs)
 			// Caso contrário, use por padrão "Json"
 		} else {
-			fmt.Println("lista de Pacientes:\n", printJSON(pacs))
+			fmt.Println("lista de Pacientes:\n", common.PrintJSON(pacs))
 		}
 	}
 }
@@ -136,17 +126,13 @@ func atualizaPacPorNome(nome string, novoPac paciente.Paciente, todos bool) {
 }
 
 // (UPDATE) Atualiza os Dados de um Paciente armazenado utilizando como parâmetro o ID Paciente,
+// Devem ser passados todos os atributos do Paciente, especialmente os PlanoPgtos,
+// caso contrário serão substituidos e/ou zerados.
+// Os atributos do Paciente são verificados inclusive os PlanoPgtos, com exceção os Convênios.
 func atualizaPacPorId(id primitive.ObjectID, novoPac paciente.Paciente) {
-	// Pega o Paciente a ser alterado
-	pac, err := armazenamento.GetPacienteById(id)
-	if err != nil {
-		fmt.Println("Erro:("+Paciente+")", err)
-		return
-	}
-	// Faz o Merge com as alterações
-	mergo.Merge(&novoPac, pac)
-	// Testa as alterações estão em conformidade
-	err = paciente.VerificarPaciente(novoPac)
+	// Checar os TODOS os dados do Paciente e seus Planos
+	var err error
+	err = paciente.ChecarPaciente(novoPac)
 	if err != nil {
 		fmt.Println("Erro:("+Paciente+")", err)
 		return
@@ -158,7 +144,7 @@ func atualizaPacPorId(id primitive.ObjectID, novoPac paciente.Paciente) {
 	} else if result.ModifiedCount > 0 {
 		fmt.Println("Paciente atualizado:", id.String())
 	} else {
-		fmt.Println("Paciente:\"" + id.String() + "\" não foi alterado ou não existe no Armazém.")
+		fmt.Println("Paciente:\"" + id.String() + "\" não foi alterado no Armazém.")
 	}
 }
 
@@ -168,13 +154,46 @@ func HabilitePacPorId(id primitive.ObjectID, b bool) {
 	result, err := armazenamento.AllowPacienteById(id, b)
 	if err != nil {
 		fmt.Println("Erro:("+Paciente+")", err)
-	} else if result.ModifiedCount == 0 {
+	} else if result.MatchedCount == 0 {
 		fmt.Println("Erro: Paciente não encontrado.")
 	} else {
 		if b {
 			fmt.Println("Paciente Desbloqueado.")
 		} else {
 			fmt.Println("Paciente Bloqueado.")
+		}
+	}
+}
+
+// (UPDATE) Insere novo PlanoPgto em um determinado Paciente passando
+// como paramêtro o ID do Paciente e o novo Planopgto.
+func InsPlanoPgtoPaciente(id primitive.ObjectID, plano planopgto.PlanoPgto) {
+	var err error
+	// obtem o Paciente pelo ID
+	pac, err := getPacientePorId(id)
+	// Checa os dados do PlanoPgto do Paciente com os dados do Plano informado
+	if err != nil {
+		fmt.Println("Erro: Paciente não encontrado")
+	} else {
+		// Checa os dados do PlanoPgto do Paciente com os dados do Plano informado
+		err = ChecaDuplicPlanoPgto(id, plano)
+		if err != nil {
+			fmt.Println("Erro: (" + Paciente + ") " + err.Error())
+		} else {
+			err = ChecaTodoPlanoPgto(plano)
+			if err != nil {
+				fmt.Println("Erro: (" + Paciente + ") " + err.Error())
+			} else {
+				// Insere no MongoDB o novo PlanoPgto do Paciente
+				result, err := armazenamento.InsPlanoPgtoPacienteById(id, plano)
+				if err != nil {
+					fmt.Println("Erro: (" + Paciente + ") " + err.Error())
+				} else if result.ModifiedCount == 0 {
+					fmt.Println("Erro: (" + Paciente + ") " + "Plano não Inserido.")
+				} else {
+					fmt.Println("Plano adicionado com sucesso no Paciente:", pac.Nome)
+				}
+			}
 		}
 	}
 }
@@ -210,4 +229,42 @@ func deletaPacientePorId(id primitive.ObjectID) {
 			fmt.Println("Pacientes deletados:", result.DeletedCount)
 		}
 	}
+}
+
+// (DELETE) Deleta PlanoPgto de um determinado Paciente passando
+// como paramêtro o ID do Paciente e o Planopgto a ser removido.
+func DelPlanoPgtoPaciente(id primitive.ObjectID, plano planopgto.PlanoPgto) {
+	// obtem o Paciente pelo ID
+	pac, err := getPacientePorId(id)
+	if err != nil {
+		fmt.Println("Erro: Paciente não encontrado")
+	} else {
+		// Delete o PlanoPgto do Paciente com os dados do Plano informado
+		result, err := armazenamento.DelPlanoPgtoPacienteById(id, plano)
+		if err != nil {
+			fmt.Println("Erro: (" + Paciente + ")" + err.Error())
+		} else if result.ModifiedCount == 0 {
+			fmt.Println("Erro: (" + Paciente + ")" + "Plano não deletetado.")
+		} else {
+			fmt.Println("Plano Deletado com sucesso do Paciente:", pac.Nome)
+		}
+	}
+}
+
+// (Checa) Checa se o Paciente já possui o PlanoPgto passando
+// como parâmetro ID Paciente e o novo Planopgto.
+func ChecaDuplicPlanoPgto(id primitive.ObjectID, plano planopgto.PlanoPgto) error {
+	// obtem o Paciente pelo ID
+	pac, err := getPacientePorId(id)
+	if err != nil {
+		return errors.New("Paciente não encontrado")
+	} else {
+		// Checa os dados do PlanoPgto do Paciente com os dados do Plano informado
+		for _, v := range pac.PlanosPgts {
+			if v.ConvenioId == plano.ConvenioId && v.NrPlano == plano.NrPlano {
+				return errors.New("O Paciente " + pac.Nome + ", já possui esse PlanoPgto (Convênio e NrPlano).")
+			}
+		}
+	}
+	return nil
 }

@@ -3,18 +3,17 @@ package armazenamento
 import (
 	"Agenda/pkgs/common"
 	"Agenda/pkgs/paciente"
+	"Agenda/pkgs/planopgto"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"gopkg.in/mgo.v2/bson"
 )
 
-// PERSISTÊNCIA: Pacientes
-
 // (CREATE) Criar Pacientes para serem utilizados nos Agendamentos
 func CreatePaciente(pac paciente.Paciente) (interface{}, error) {
 	// Antes de qq coisa, verificar os dados do Paciente.
-	err := paciente.VerificarPaciente(pac)
+	err := paciente.ChecarPaciente(pac)
 	if err != nil {
 		return nil, err
 	}
@@ -30,7 +29,7 @@ func CreatePaciente(pac paciente.Paciente) (interface{}, error) {
 }
 
 // (READ) Ler/Retorna Lista de Pacientes buscando por Nome independete de Caixa/Baixa.
-// A String "*" indica todos os Pacientes.
+// A String "*" indica todos os Pacientes. Se não encontrar, retorna erro e um Array de Paciente Nulo.
 func GetPacientesByName(nome string) ([]paciente.Paciente, error) {
 	// Definir o Banco e a Coleção de Dados
 	Pacientes = Cliente.Database(common.ConfigInicial.ArmazemDatabase).Collection("Pacientes")
@@ -55,7 +54,7 @@ func GetPacientesByName(nome string) ([]paciente.Paciente, error) {
 	return pacs, nil
 }
 
-// (READ) Ler/Retorna Pacientes por ID
+// (READ) Ler/Retorna Pacientes por ID. Se não encontrar retorna um Erro e um Paciente com atributos zerados.
 func GetPacienteById(id primitive.ObjectID) (paciente.Paciente, error) {
 	// Definir o Banco e a Coleção de Dados
 	Pacientes = Cliente.Database(common.ConfigInicial.ArmazemDatabase).Collection("Pacientes")
@@ -71,7 +70,7 @@ func GetPacienteById(id primitive.ObjectID) (paciente.Paciente, error) {
 	return pac, nil
 }
 
-// (READ) Ler/Retorna Pacientes por CPF
+// (READ) Ler/Retorna Pacientes por CPF. Se não encontrar retorna um Erro e um Paciente com atributos zerados.
 func GetPacienteByCPF(cpf string) (paciente.Paciente, error) {
 	// Definir o Banco e a Coleção de Dados
 	Pacientes = Cliente.Database(common.ConfigInicial.ArmazemDatabase).Collection("Pacientes")
@@ -149,6 +148,22 @@ func AllowPacienteById(id primitive.ObjectID, b bool) (*mongo.UpdateResult, erro
 	}
 }
 
+// (UPDATE) Insere um Novo PlanoPgto no Paciente por ID. Se não encontrar um Convênio NÃO retorna erro.
+func InsPlanoPgtoPacienteById(id primitive.ObjectID, plano planopgto.PlanoPgto) (*mongo.UpdateResult, error) {
+	// Definir o Banco e a Coleção de Dados
+	Pacientes = Cliente.Database(common.ConfigInicial.ArmazemDatabase).Collection("Pacientes")
+	// Define o valor a ser atualizado
+	update := bson.M{"$push": bson.M{"planospgts": plano}}
+	var result *mongo.UpdateResult
+	var err error
+	result, err = Pacientes.UpdateByID(ctx, id, update)
+	if err != nil {
+		return nil, err
+	} else {
+		return result, nil
+	}
+}
+
 // (DELETE) Deleta os Pacientes de acordo com o "Nome" passado como parâmetro.
 // Se "todos" = "true", todos os Docs do filtro serão deletados.
 func DeletePacienteByName(nome string, todos bool) (*mongo.DeleteResult, error) {
@@ -192,4 +207,20 @@ func DeletePacienteById(id primitive.ObjectID) (*mongo.DeleteResult, error) {
 	}
 	// Retornar o resultado
 	return result, nil
+}
+
+// (DELETE) Deleta um PlanoPgto no Paciente por ID. Se não encontrar um Convênio NÃO retorna erro.
+func DelPlanoPgtoPacienteById(id primitive.ObjectID, plano planopgto.PlanoPgto) (*mongo.UpdateResult, error) {
+	// Definir o Banco e a Coleção de Dados
+	Pacientes = Cliente.Database(common.ConfigInicial.ArmazemDatabase).Collection("Pacientes")
+	// Define o valor a ser atualizado
+	update := bson.M{"$pull": bson.M{"planospgts": plano}}
+	var result *mongo.UpdateResult
+	var err error
+	result, err = Pacientes.UpdateByID(ctx, id, update)
+	if err != nil {
+		return nil, err
+	} else {
+		return result, nil
+	}
 }

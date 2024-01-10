@@ -1,6 +1,7 @@
 package common
 
 import (
+	"encoding/json"
 	"regexp"
 	"strconv"
 )
@@ -64,4 +65,10 @@ func NrCelValido(cel int64) bool {
 		return false
 	}
 	return true
+}
+
+// Converter struct para Json
+func PrintJSON(input interface{}) string {
+	s, _ := json.MarshalIndent(input, "", "\t")
+	return string(s)
 }
