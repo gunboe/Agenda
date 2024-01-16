@@ -1,25 +1,24 @@
-package paciente
+package models
 
 import (
-	"Agenda/pkgs/common"
-	"Agenda/pkgs/planopgto"
+	"Agenda/common"
 	"errors"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type Paciente struct {
-	ID           primitive.ObjectID    `bson:"_id,omitempty"`
-	Nome         string                `bson:"nome,omitempty"`
-	CPF          string                `bson:"cpf,omitempty"`
-	NrCelular    int64                 `bson:"nr_celular,omitempty"`
-	Email        string                `bson:"email,omitempty"`
-	Endereco     string                `bson:"endereco,omitempty"`
-	PlanosPgts   []planopgto.PlanoPgto `bson:"planospgts,omitempty"`
-	CanaisPrefer []string              `bson:"canais_prefer,omitempty"`
-	Bloqueado    bool                  `bson:"bloqueado"` // Default: Bloqueado=FALSE(NIL) -> Não-Bloqueado
-	secret       string                `bson:"secret,omitempty"`
-	obs          []string              `bson:"obs,omitempty"`
+	ID           primitive.ObjectID `bson:"_id,omitempty"`
+	Nome         string             `bson:"nome,omitempty"`
+	CPF          string             `bson:"cpf,omitempty"`
+	NrCelular    int64              `bson:"nr_celular,omitempty"`
+	Email        string             `bson:"email,omitempty"`
+	Endereco     string             `bson:"endereco,omitempty"`
+	PlanosPgts   []PlanoPgto        `bson:"planospgts,omitempty"`
+	CanaisPrefer []string           `bson:"canais_prefer,omitempty"`
+	Bloqueado    bool               `bson:"bloqueado"` // Default: Bloqueado=FALSE(NIL) -> Não-Bloqueado
+	secret       string             `bson:"secret,omitempty"`
+	obs          []string           `bson:"obs,omitempty"`
 }
 
 // Função de Validação do Paciente
@@ -36,11 +35,20 @@ func ChecarPaciente(pac Paciente) error {
 	} else if pac.Email != "" && !common.EmailValido(pac.Email) {
 		return errors.New("Email no formato inválido.")
 	}
-	// TODO (TESTAR) Verificar os PlanosPgto dele
-	for _, v := range pac.PlanosPgts {
-		err := planopgto.ChecarPlanoPgto(v)
+	// Verificar os PlanosPgto
+	for i, v := range pac.PlanosPgts {
+		err := ChecarPlanoPgto(v)
 		if err != nil {
 			return err
+		}
+		// Checar PlanoPgto duplicados
+		for j := i + 1; j < len(pac.PlanosPgts); j++ {
+			if pac.PlanosPgts[i].ConvenioId == pac.PlanosPgts[j].ConvenioId && pac.PlanosPgts[i].NrPlano == pac.PlanosPgts[j].NrPlano {
+				if pac.PlanosPgts[i].Particular {
+					return errors.New("PlanoPgto Particular já existe, está duplicado.")
+				}
+				return errors.New("PlanoPgto Nr:" + pac.PlanosPgts[i].NrPlano + " já existe, está duplicado.")
+			}
 		}
 	}
 	return nil

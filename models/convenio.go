@@ -1,4 +1,4 @@
-package convenio
+package models
 
 import (
 	"errors"

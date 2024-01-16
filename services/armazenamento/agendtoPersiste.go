@@ -1,12 +1,12 @@
 package armazenamento
 
 import (
-	"Agenda/pkgs/agendamento"
-	"Agenda/pkgs/common"
+	"Agenda/models"
+	config "Agenda/services"
 )
 
 // CRUD Agendamentos
-func GravarAgendamento(conf common.Config, ag agendamento.Agendamento) (interface{}, error) {
+func GravarAgendamento(conf config.Config, ag models.Agendamento) (interface{}, error) {
 	client, err := ConnectMongo(conf)
 	if err != nil {
 		return nil, err

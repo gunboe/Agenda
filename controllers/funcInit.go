@@ -1,7 +1,8 @@
-package main
+package controllers
 
 import (
-	"Agenda/pkgs/common"
+	config "Agenda/services"
+
 	"fmt"
 	"strings"
 )
@@ -11,15 +12,15 @@ import (
 ////////////////////////////
 
 // Inicializa o ambiente
-func inicializaAmbiente() {
+func InicializaAmbiente() {
 	// Carrega as configurações
-	var conf common.Config
-	conf = common.ConfigInicial
+	var conf config.Config
+	conf = config.ConfigInicial
 	// Conecta ao Banco
 	fmt.Println("Utilizando o DataBase:", conf.ArmazemDatabase)
 	// Testa o Banco relacionando todos os Convênnios e Pacientes
-	todosConvs := getConveniosPorNome("*")
-	todosPacientes := getPacientesPorNome("*")
+	todosConvs := GetConveniosPorNome("*")
+	todosPacientes := GetPacientesPorNome("*")
 	// Listagem de Convenios
 	var listaConvs string
 	for _, v := range todosConvs {

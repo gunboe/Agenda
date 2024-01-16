@@ -1,7 +1,7 @@
-package agente
+package models
 
 import (
-	"Agenda/pkgs/common"
+	"Agenda/common"
 	"errors"
 )
 

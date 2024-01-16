@@ -1,7 +1,6 @@
-package preagenda
+package models
 
 import (
-	"Agenda/pkgs/agente"
 	"errors"
 	"time"
 
@@ -10,7 +9,7 @@ import (
 
 type PreAgenda struct {
 	ID         primitive.ObjectID
-	Agente     agente.Agente
+	AgenteID   primitive.ObjectID
 	DataInicio time.Time
 	DataFinal  time.Time
 	HoraInicio time.Duration
@@ -21,7 +20,8 @@ type PreAgenda struct {
 // Regras de Negocio dos Agesntes e PreAgenda
 // PreAgenda
 func VerificarPreAgenda(pa PreAgenda) error {
-	err := agente.VerificarAgente(pa.Agente)
+	var err error
+	// err := VerificarAgente(pa.AgenteID)
 	if err != nil {
 		return err
 	} else if pa.DataFinal.Before(pa.DataInicio) {

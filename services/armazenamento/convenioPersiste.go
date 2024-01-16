@@ -2,8 +2,8 @@
 package armazenamento
 
 import (
-	"Agenda/pkgs/common"
-	"Agenda/pkgs/convenio"
+	"Agenda/models"
+	config "Agenda/services"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -11,14 +11,14 @@ import (
 )
 
 // (CREATE) Criar Convênios para serem utilizados nos Planos de Pagamentos.
-func CreateConvenio(cv convenio.Convenio) (interface{}, error) {
+func CreateConvenio(cv models.Convenio) (interface{}, error) {
 	// Antes de qq coisa, verificar os dados do Convenio.
-	err := convenio.ChecarConvenio(cv)
+	err := models.ChecarConvenio(cv)
 	if err != nil {
 		return nil, err
 	}
 	// Definir o Banco e a Coleção de Dados
-	Convenios = Cliente.Database(common.ConfigInicial.ArmazemDatabase).Collection("Convenios")
+	Convenios = Cliente.Database(config.ConfigInicial.ArmazemDatabase).Collection("Convenios")
 	// Inserir os Dados no contexto atual
 	result, err := Convenios.InsertOne(ctx, cv)
 	if err != nil {
@@ -30,9 +30,9 @@ func CreateConvenio(cv convenio.Convenio) (interface{}, error) {
 
 // (READ) Ler/Retorna Lista de Convênios buscando por Nome independete de Caixa/Baixa.
 // A String "*" indica todos os Convênios.
-func GetConveniosByName(nome string) ([]convenio.Convenio, error) {
+func GetConveniosByName(nome string) ([]models.Convenio, error) {
 	// Definir o Banco e a Coleção de Dados
-	Convenios = Cliente.Database(common.ConfigInicial.ArmazemDatabase).Collection("Convenios")
+	Convenios = Cliente.Database(config.ConfigInicial.ArmazemDatabase).Collection("Convenios")
 	// Cria os filtros adequados de pesquisa no MongoDB
 	var filter bson.M
 	if nome == "*" {
@@ -46,7 +46,7 @@ func GetConveniosByName(nome string) ([]convenio.Convenio, error) {
 		return nil, err
 	}
 	// Cria um Slice para receber os Docs apontados pelo cursor do Driver do Mongo
-	var convs []convenio.Convenio
+	var convs []models.Convenio
 	err = cursor.All(ctx, &convs)
 	if err != nil {
 		return nil, err
@@ -55,13 +55,13 @@ func GetConveniosByName(nome string) ([]convenio.Convenio, error) {
 }
 
 // (READ) Ler/Retorna Convênios por ID. Se não encontrar retorna um Erro e um Convenio com atributos zerados.
-func GetConvenioById(id primitive.ObjectID) (convenio.Convenio, error) {
+func GetConvenioById(id primitive.ObjectID) (models.Convenio, error) {
 	// Definir o Banco e a Coleção de Dados
-	Convenios = Cliente.Database(common.ConfigInicial.ArmazemDatabase).Collection("Convenios")
+	Convenios = Cliente.Database(config.ConfigInicial.ArmazemDatabase).Collection("Convenios")
 	// Cria os filtros adequados de pesquisa no MongoDB
 	filter := bson.M{"_id": id}
 	// Cria um Convênio
-	var conv convenio.Convenio
+	var conv models.Convenio
 	// Alinha o cursor de busca
 	err := Convenios.FindOne(ctx, filter).Decode(&conv)
 	if err != nil {
@@ -72,9 +72,9 @@ func GetConvenioById(id primitive.ObjectID) (convenio.Convenio, error) {
 
 // (UPDATE) Atualiza um ou mais Convenios pelo Nome do Convênio. Se não encontrar um Convênio NÃO retorna erro.
 // Ao passar a String "*" todos os registros filtrados serão alterados.
-func UpdateConvenioByName(nome string, novoConv convenio.Convenio, todos bool) (*mongo.UpdateResult, error) {
+func UpdateConvenioByName(nome string, novoConv models.Convenio, todos bool) (*mongo.UpdateResult, error) {
 	// Definir o Banco e a Coleção de Dados
-	Convenios = Cliente.Database(common.ConfigInicial.ArmazemDatabase).Collection("Convenios")
+	Convenios = Cliente.Database(config.ConfigInicial.ArmazemDatabase).Collection("Convenios")
 	// Cria os filtros adequados de pesquisa no MongoDB
 	var filter bson.M
 	if nome == "*" {
@@ -99,9 +99,9 @@ func UpdateConvenioByName(nome string, novoConv convenio.Convenio, todos bool) (
 }
 
 // (UPDATE) Atualiza os Compos de um Convenios pelo ID do Convênio. Se não encontrar um Convênio NÃO retorna erro.
-func UpdateConvenioById(id primitive.ObjectID, novoConv convenio.Convenio) (*mongo.UpdateResult, error) {
+func UpdateConvenioById(id primitive.ObjectID, novoConv models.Convenio) (*mongo.UpdateResult, error) {
 	// Definir o Banco e a Coleção de Dados
-	Convenios = Cliente.Database(common.ConfigInicial.ArmazemDatabase).Collection("Convenios")
+	Convenios = Cliente.Database(config.ConfigInicial.ArmazemDatabase).Collection("Convenios")
 	// Cria os filtros adequados de pesquisa no MongoDB
 	update := bson.M{"$set": novoConv}
 	var result *mongo.UpdateResult
@@ -118,7 +118,7 @@ func UpdateConvenioById(id primitive.ObjectID, novoConv convenio.Convenio) (*mon
 // ele não pode ser alterado nem utilizado em PlanosPgto. Se não encontrar um Convênio NÃO retorna erro.
 func AllowConveioById(id primitive.ObjectID, b bool) (*mongo.UpdateResult, error) {
 	// Definir o Banco e a Coleção de Dados
-	Convenios = Cliente.Database(common.ConfigInicial.ArmazemDatabase).Collection("Convenios")
+	Convenios = Cliente.Database(config.ConfigInicial.ArmazemDatabase).Collection("Convenios")
 	// Define o valor a ser atualizado
 	update := bson.M{"$set": bson.M{"indisponivel": !b}}
 	var result *mongo.UpdateResult
@@ -135,7 +135,7 @@ func AllowConveioById(id primitive.ObjectID, b bool) (*mongo.UpdateResult, error
 // Se "todos" = "true", todos os Docs do filtro serão deletados.
 func DeleteConvenioByName(nome string, todos bool) (*mongo.DeleteResult, error) {
 	// Definir o Banco e a Coleção de Dados
-	Convenios = Cliente.Database(common.ConfigInicial.ArmazemDatabase).Collection("Convenios")
+	Convenios = Cliente.Database(config.ConfigInicial.ArmazemDatabase).Collection("Convenios")
 	// Inserir os Dados no contexto atual
 	var result *mongo.DeleteResult
 	// Cria os filtros adequados de pesquisa no MongoDB
@@ -162,7 +162,7 @@ func DeleteConvenioByName(nome string, todos bool) (*mongo.DeleteResult, error) 
 // Deleta os Convênios de acordo com o "Nome" passado como parâmetro.
 func DeleteConvenioById(id primitive.ObjectID) (*mongo.DeleteResult, error) {
 	// Definir o Banco e a Coleção de Dados
-	Convenios = Cliente.Database(common.ConfigInicial.ArmazemDatabase).Collection("Convenios")
+	Convenios = Cliente.Database(config.ConfigInicial.ArmazemDatabase).Collection("Convenios")
 	// Inserir os Dados no contexto atual
 	var result *mongo.DeleteResult
 	// Cria os filtros adequados de pesquisa no MongoDB

@@ -1,4 +1,4 @@
-package planopgto
+package models
 
 import (
 	"errors"

@@ -1,9 +1,8 @@
 package armazenamento
 
 import (
-	"Agenda/pkgs/common"
-	"Agenda/pkgs/paciente"
-	"Agenda/pkgs/planopgto"
+	"Agenda/models"
+	config "Agenda/services"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -11,14 +10,14 @@ import (
 )
 
 // (CREATE) Criar Pacientes para serem utilizados nos Agendamentos
-func CreatePaciente(pac paciente.Paciente) (interface{}, error) {
+func CreatePaciente(pac models.Paciente) (interface{}, error) {
 	// Antes de qq coisa, verificar os dados do Paciente.
-	err := paciente.ChecarPaciente(pac)
+	err := models.ChecarPaciente(pac)
 	if err != nil {
 		return nil, err
 	}
 	// Definir o Banco e a Coleção de Dados
-	Pacientes = Cliente.Database(common.ConfigInicial.ArmazemDatabase).Collection("Pacientes")
+	Pacientes = Cliente.Database(config.ConfigInicial.ArmazemDatabase).Collection("Pacientes")
 	// Inserir os Dados no contexto atual
 	result, err := Pacientes.InsertOne(ctx, pac)
 	if err != nil {
@@ -30,9 +29,9 @@ func CreatePaciente(pac paciente.Paciente) (interface{}, error) {
 
 // (READ) Ler/Retorna Lista de Pacientes buscando por Nome independete de Caixa/Baixa.
 // A String "*" indica todos os Pacientes. Se não encontrar, retorna erro e um Array de Paciente Nulo.
-func GetPacientesByName(nome string) ([]paciente.Paciente, error) {
+func GetPacientesByName(nome string) ([]models.Paciente, error) {
 	// Definir o Banco e a Coleção de Dados
-	Pacientes = Cliente.Database(common.ConfigInicial.ArmazemDatabase).Collection("Pacientes")
+	Pacientes = Cliente.Database(config.ConfigInicial.ArmazemDatabase).Collection("Pacientes")
 	// Cria os filtros adequados de pesquisa no MongoDB
 	var filter bson.M
 	if nome == "*" {
@@ -46,7 +45,7 @@ func GetPacientesByName(nome string) ([]paciente.Paciente, error) {
 		return nil, err
 	}
 	// Cria um Slice para receber os Docs apontados pelo cursor do Driver do Mongo
-	var pacs []paciente.Paciente
+	var pacs []models.Paciente
 	err = cursor.All(ctx, &pacs)
 	if err != nil {
 		return nil, err
@@ -55,13 +54,13 @@ func GetPacientesByName(nome string) ([]paciente.Paciente, error) {
 }
 
 // (READ) Ler/Retorna Pacientes por ID. Se não encontrar retorna um Erro e um Paciente com atributos zerados.
-func GetPacienteById(id primitive.ObjectID) (paciente.Paciente, error) {
+func GetPacienteById(id primitive.ObjectID) (models.Paciente, error) {
 	// Definir o Banco e a Coleção de Dados
-	Pacientes = Cliente.Database(common.ConfigInicial.ArmazemDatabase).Collection("Pacientes")
+	Pacientes = Cliente.Database(config.ConfigInicial.ArmazemDatabase).Collection("Pacientes")
 	// Cria os filtros adequados de pesquisa no MongoDB
 	filter := bson.M{"_id": id}
 	// Cria um Paciente
-	var pac paciente.Paciente
+	var pac models.Paciente
 	// Alinha o cursor de busca
 	err := Pacientes.FindOne(ctx, filter).Decode(&pac)
 	if err != nil {
@@ -71,13 +70,13 @@ func GetPacienteById(id primitive.ObjectID) (paciente.Paciente, error) {
 }
 
 // (READ) Ler/Retorna Pacientes por CPF. Se não encontrar retorna um Erro e um Paciente com atributos zerados.
-func GetPacienteByCPF(cpf string) (paciente.Paciente, error) {
+func GetPacienteByCPF(cpf string) (models.Paciente, error) {
 	// Definir o Banco e a Coleção de Dados
-	Pacientes = Cliente.Database(common.ConfigInicial.ArmazemDatabase).Collection("Pacientes")
+	Pacientes = Cliente.Database(config.ConfigInicial.ArmazemDatabase).Collection("Pacientes")
 	// Cria os filtros adequados de pesquisa no MongoDB
 	filter := bson.M{"cpf": cpf}
 	// Cria um Paciente
-	var pac paciente.Paciente
+	var pac models.Paciente
 	// Alinha o cursor de busca
 	err := Pacientes.FindOne(ctx, filter).Decode(&pac)
 	if err != nil {
@@ -88,9 +87,9 @@ func GetPacienteByCPF(cpf string) (paciente.Paciente, error) {
 
 // (UPDATE) Atualiza um ou mais Pacientes pelo Nome do Paciente. Se não encontrar um Paciente NÃO retorna erro.
 // Ao passar a String "*" todos os registros filtrados serão alterados
-func UpdatePacienteByName(nome string, novoPac paciente.Paciente, todos bool) (*mongo.UpdateResult, error) {
+func UpdatePacienteByName(nome string, novoPac models.Paciente, todos bool) (*mongo.UpdateResult, error) {
 	// Definir o Banco e a Coleção de Dados
-	Pacientes = Cliente.Database(common.ConfigInicial.ArmazemDatabase).Collection("Pacientes")
+	Pacientes = Cliente.Database(config.ConfigInicial.ArmazemDatabase).Collection("Pacientes")
 	// Cria os filtros adequados de pesquisa no MongoDB
 	var filter bson.M
 	if nome == "*" {
@@ -115,9 +114,9 @@ func UpdatePacienteByName(nome string, novoPac paciente.Paciente, todos bool) (*
 }
 
 // (UPDATE) Atualiza os Compos de um Pacientes pelo ID do Convênio. Se não encontrar um Paciente NÃO retorna erro.
-func UpdatePacienteById(id primitive.ObjectID, novoPac paciente.Paciente) (*mongo.UpdateResult, error) {
+func UpdatePacienteById(id primitive.ObjectID, novoPac models.Paciente) (*mongo.UpdateResult, error) {
 	// Definir o Banco e a Coleção de Dados
-	Pacientes = Cliente.Database(common.ConfigInicial.ArmazemDatabase).Collection("Pacientes")
+	Pacientes = Cliente.Database(config.ConfigInicial.ArmazemDatabase).Collection("Pacientes")
 	// Cria os filtros adequados de pesquisa no MongoDB
 	// filter := bson.M{"_id": id}
 	update := bson.M{"$set": novoPac}
@@ -135,7 +134,7 @@ func UpdatePacienteById(id primitive.ObjectID, novoPac paciente.Paciente) (*mong
 // ele não pode ser alterado nem utilizado em Agendamentos. Se não encontrar um Convênio NÃO retorna erro.
 func AllowPacienteById(id primitive.ObjectID, b bool) (*mongo.UpdateResult, error) {
 	// Definir o Banco e a Coleção de Dados
-	Pacientes = Cliente.Database(common.ConfigInicial.ArmazemDatabase).Collection("Pacientes")
+	Pacientes = Cliente.Database(config.ConfigInicial.ArmazemDatabase).Collection("Pacientes")
 	// Define o valor a ser atualizado
 	update := bson.M{"$set": bson.M{"bloqueado": !b}}
 	var result *mongo.UpdateResult
@@ -149,9 +148,9 @@ func AllowPacienteById(id primitive.ObjectID, b bool) (*mongo.UpdateResult, erro
 }
 
 // (UPDATE) Insere um Novo PlanoPgto no Paciente por ID. Se não encontrar um Convênio NÃO retorna erro.
-func InsPlanoPgtoPacienteById(id primitive.ObjectID, plano planopgto.PlanoPgto) (*mongo.UpdateResult, error) {
+func InsPlanoPgtoPacienteById(id primitive.ObjectID, plano models.PlanoPgto) (*mongo.UpdateResult, error) {
 	// Definir o Banco e a Coleção de Dados
-	Pacientes = Cliente.Database(common.ConfigInicial.ArmazemDatabase).Collection("Pacientes")
+	Pacientes = Cliente.Database(config.ConfigInicial.ArmazemDatabase).Collection("Pacientes")
 	// Define o valor a ser atualizado
 	update := bson.M{"$push": bson.M{"planospgts": plano}}
 	var result *mongo.UpdateResult
@@ -168,7 +167,7 @@ func InsPlanoPgtoPacienteById(id primitive.ObjectID, plano planopgto.PlanoPgto) 
 // Se "todos" = "true", todos os Docs do filtro serão deletados.
 func DeletePacienteByName(nome string, todos bool) (*mongo.DeleteResult, error) {
 	// Definir o Banco e a Coleção de Dados
-	Pacientes = Cliente.Database(common.ConfigInicial.ArmazemDatabase).Collection("Pacientes")
+	Pacientes = Cliente.Database(config.ConfigInicial.ArmazemDatabase).Collection("Pacientes")
 	// Inserir os Dados no contexto atual
 	var result *mongo.DeleteResult
 	// Cria os filtros adequados de pesquisa no MongoDB
@@ -195,7 +194,7 @@ func DeletePacienteByName(nome string, todos bool) (*mongo.DeleteResult, error) 
 // Deleta os Pacientes de acordo com o "Nome" passado como parâmetro.
 func DeletePacienteById(id primitive.ObjectID) (*mongo.DeleteResult, error) {
 	// Definir o Banco e a Coleção de Dados
-	Pacientes = Cliente.Database(common.ConfigInicial.ArmazemDatabase).Collection("Pacientes")
+	Pacientes = Cliente.Database(config.ConfigInicial.ArmazemDatabase).Collection("Pacientes")
 	// Inserir os Dados no contexto atual
 	var result *mongo.DeleteResult
 	// Cria os filtros adequados de pesquisa no MongoDB
@@ -210,9 +209,9 @@ func DeletePacienteById(id primitive.ObjectID) (*mongo.DeleteResult, error) {
 }
 
 // (DELETE) Deleta um PlanoPgto no Paciente por ID. Se não encontrar um Convênio NÃO retorna erro.
-func DelPlanoPgtoPacienteById(id primitive.ObjectID, plano planopgto.PlanoPgto) (*mongo.UpdateResult, error) {
+func DelPlanoPgtoPacienteById(id primitive.ObjectID, plano models.PlanoPgto) (*mongo.UpdateResult, error) {
 	// Definir o Banco e a Coleção de Dados
-	Pacientes = Cliente.Database(common.ConfigInicial.ArmazemDatabase).Collection("Pacientes")
+	Pacientes = Cliente.Database(config.ConfigInicial.ArmazemDatabase).Collection("Pacientes")
 	// Define o valor a ser atualizado
 	update := bson.M{"$pull": bson.M{"planospgts": plano}}
 	var result *mongo.UpdateResult

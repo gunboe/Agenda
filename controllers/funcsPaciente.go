@@ -1,11 +1,9 @@
-package main
+package controllers
 
 import (
-	"Agenda/pkgs/armazenamento"
-	"Agenda/pkgs/common"
-	"Agenda/pkgs/paciente"
-	"Agenda/pkgs/planopgto"
-	"errors"
+	"Agenda/common"
+	"Agenda/models"
+	"Agenda/services/armazenamento"
 	"fmt"
 	"strings"
 
@@ -20,13 +18,8 @@ const Paciente = "Paciente"
 /////////////////
 
 // (CREATE) Cria Paciente e salva no armazém
-func criaPaciente(pac paciente.Paciente) {
+func CriaPaciente(pac models.Paciente) {
 	var err error
-	//
-	// TODO: Checar PlanoPgto dupĺicado neste Paciente!!
-	// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-	//
-
 	// Checas os PlanoPagtos do Paciente
 	for _, v := range pac.PlanosPgts {
 		// Checa os Atributos do PlanoPgto
@@ -36,14 +29,14 @@ func criaPaciente(pac paciente.Paciente) {
 			return
 		}
 	}
-	// Verifica o Paciente
-	err = paciente.ChecarPaciente(pac)
+	// Verifica os atributos do Paciente inclusive os PlanosPgto (com duplicação!)
+	err = models.ChecarPaciente(pac)
 	if err != nil {
 		fmt.Println("Erro:("+Paciente+")", err)
 		return
 	}
 	// Checa se já existe Paciente pelo CPF no Armazem
-	var p paciente.Paciente
+	var p models.Paciente
 	p, _ = armazenamento.GetPacienteByCPF(pac.CPF)
 	if p.ID.IsZero() {
 		// Salva Paciente no armazém
@@ -60,7 +53,7 @@ func criaPaciente(pac paciente.Paciente) {
 
 // (READ) Retorna um Vetor de Pacientes passando como parâmetro o "Nome" do Paciente.
 // Se o argumento "nome" = "*", retornará todos os Pacientes armazenados.
-func getPacientesPorNome(pac string) []paciente.Paciente {
+func GetPacientesPorNome(pac string) []models.Paciente {
 	pacs, err := armazenamento.GetPacientesByName(pac)
 	if err != nil {
 		fmt.Println("Erro:("+Paciente+")", err)
@@ -74,17 +67,17 @@ func getPacientesPorNome(pac string) []paciente.Paciente {
 }
 
 // (READ) Retorna um Paciente passando como parâmetro o "ID" do Paciente. Se não encontrar retorna Paciente Zerado.
-func getPacientePorId(id primitive.ObjectID) (paciente.Paciente, error) {
+func GetPacientePorId(id primitive.ObjectID) (models.Paciente, error) {
 	pac, err := armazenamento.GetPacienteById(id)
 	if err != nil {
-		return paciente.Paciente{}, err
+		return models.Paciente{}, err
 	}
 	return pac, nil
 }
 
 // (list) Retorna Lista de Pacientes no formato Json ou Bson passando como parâmetro o "Nome" do Paciente.
 // Se o argumento "nome" = "*", retornará todos os Pacientes armazenados.
-func listaPaciente(nome string, formato ...string) {
+func ListaPaciente(nome string, formato ...string) {
 	fmt.Println("Localizando Pacientes...")
 	pacs, err := armazenamento.GetPacientesByName(nome)
 	if err != nil {
@@ -103,7 +96,7 @@ func listaPaciente(nome string, formato ...string) {
 // (UPDATE) Atualiza os Dados de um ou mais Paciente armazenado utilizando como parâmetro o Nome do Paciente("nome"),
 // o Struct do Novo Paciente("novoPac") e a opção de alterar Todos("todos") simultaneamente.
 // Essa função NÃO checa os valores, LOGO NÃO DEVE SER USADA NA PRODUÇÃO. Utilize "porID".
-func atualizaPacPorNome(nome string, novoPac paciente.Paciente, todos bool) {
+func AtualizaPacPorNome(nome string, novoPac models.Paciente, todos bool) {
 	// Checa se o Nome do Paciente para a Busca está vazio
 	if nome == "" {
 		fmt.Println("Erro: Nome do Paciente nulo/vazio.")
@@ -129,15 +122,23 @@ func atualizaPacPorNome(nome string, novoPac paciente.Paciente, todos bool) {
 // Devem ser passados todos os atributos do Paciente, especialmente os PlanoPgtos,
 // caso contrário serão substituidos e/ou zerados.
 // Os atributos do Paciente são verificados inclusive os PlanoPgtos, com exceção os Convênios.
-func atualizaPacPorId(id primitive.ObjectID, novoPac paciente.Paciente) {
-	// Checar os TODOS os dados do Paciente e seus Planos
+func AtualizaPacPorId(id primitive.ObjectID, novoPac models.Paciente) {
 	var err error
-	err = paciente.ChecarPaciente(novoPac)
+	// Checas os PlanoPagtos do Paciente
+	for _, v := range novoPac.PlanosPgts {
+		// Checa os Atributos do PlanoPgto
+		err = ChecaTodoPlanoPgto(v)
+		if err != nil {
+			fmt.Println("Erro:("+Paciente+")", err)
+			return
+		}
+	}
+	// Verifica o Paciente
+	err = models.ChecarPaciente(novoPac)
 	if err != nil {
 		fmt.Println("Erro:("+Paciente+")", err)
 		return
 	}
-	// Atualiza os dados do Paciente
 	result, err := armazenamento.UpdatePacienteById(id, novoPac)
 	if err != nil {
 		fmt.Println("Erro:("+Paciente+")", err)
@@ -148,7 +149,7 @@ func atualizaPacPorId(id primitive.ObjectID, novoPac paciente.Paciente) {
 	}
 }
 
-// (UPDATE) Desbloquear um Paciente por ID. Caso um ele esteja marcado como Bloqueado,
+// (UPDATE) Bloquear/Desbloquear um Paciente por ID. Caso um ele esteja marcado como Bloqueado,
 // essa função o torna Disponível novamente para alteração de dados ou uso em Agendamentos.
 func HabilitePacPorId(id primitive.ObjectID, b bool) {
 	result, err := armazenamento.AllowPacienteById(id, b)
@@ -167,16 +168,18 @@ func HabilitePacPorId(id primitive.ObjectID, b bool) {
 
 // (UPDATE) Insere novo PlanoPgto em um determinado Paciente passando
 // como paramêtro o ID do Paciente e o novo Planopgto.
-func InsPlanoPgtoPaciente(id primitive.ObjectID, plano planopgto.PlanoPgto) {
+func InsPlanoPgtoPaciente(id primitive.ObjectID, plano models.PlanoPgto) {
 	var err error
 	// obtem o Paciente pelo ID
-	pac, err := getPacientePorId(id)
+	pac, err := GetPacientePorId(id)
 	// Checa os dados do PlanoPgto do Paciente com os dados do Plano informado
 	if err != nil {
 		fmt.Println("Erro: Paciente não encontrado")
 	} else {
 		// Checa os dados do PlanoPgto do Paciente com os dados do Plano informado
-		err = ChecaDuplicPlanoPgto(id, plano)
+		pac.PlanosPgts = append(pac.PlanosPgts, plano)
+		// Chama a checagem do Modelo após o append do novo Plano
+		err = models.ChecarPaciente(pac)
 		if err != nil {
 			fmt.Println("Erro: (" + Paciente + ") " + err.Error())
 		} else {
@@ -200,7 +203,7 @@ func InsPlanoPgtoPaciente(id primitive.ObjectID, plano planopgto.PlanoPgto) {
 
 // (DELETE) Deleta um Paciente específico ou mais de um utilizando o Nome do Paciente como parâmetro de busca.
 // Para Deletar todos os Pacientes da busca é possível utilizar o parâmetro Boleano "todos".
-func deletaPacientesPorNome(nome string, todos bool) {
+func DeletaPacientesPorNome(nome string, todos bool) {
 	// Checa se o Nome do Paciente está vazio
 	if nome == "" {
 		fmt.Println("Erro: Nome do Paciente nulo/vazio.")
@@ -216,7 +219,7 @@ func deletaPacientesPorNome(nome string, todos bool) {
 }
 
 // (DELETE) Deleta um Paciente específico utilizando o ID do Paciente como parâmetro de busca.
-func deletaPacientePorId(id primitive.ObjectID) {
+func DeletaPacientePorId(id primitive.ObjectID) {
 	// Checa se o Nome do Paciente está vazio
 	if id.IsZero() {
 		fmt.Println("Erro: ID nulo/vazio.")
@@ -233,9 +236,9 @@ func deletaPacientePorId(id primitive.ObjectID) {
 
 // (DELETE) Deleta PlanoPgto de um determinado Paciente passando
 // como paramêtro o ID do Paciente e o Planopgto a ser removido.
-func DelPlanoPgtoPaciente(id primitive.ObjectID, plano planopgto.PlanoPgto) {
+func DelPlanoPgtoPaciente(id primitive.ObjectID, plano models.PlanoPgto) {
 	// obtem o Paciente pelo ID
-	pac, err := getPacientePorId(id)
+	pac, err := GetPacientePorId(id)
 	if err != nil {
 		fmt.Println("Erro: Paciente não encontrado")
 	} else {
@@ -249,22 +252,4 @@ func DelPlanoPgtoPaciente(id primitive.ObjectID, plano planopgto.PlanoPgto) {
 			fmt.Println("Plano Deletado com sucesso do Paciente:", pac.Nome)
 		}
 	}
-}
-
-// (Checa) Checa se o Paciente já possui o PlanoPgto passando
-// como parâmetro ID Paciente e o novo Planopgto.
-func ChecaDuplicPlanoPgto(id primitive.ObjectID, plano planopgto.PlanoPgto) error {
-	// obtem o Paciente pelo ID
-	pac, err := getPacientePorId(id)
-	if err != nil {
-		return errors.New("Paciente não encontrado")
-	} else {
-		// Checa os dados do PlanoPgto do Paciente com os dados do Plano informado
-		for _, v := range pac.PlanosPgts {
-			if v.ConvenioId == plano.ConvenioId && v.NrPlano == plano.NrPlano {
-				return errors.New("O Paciente " + pac.Nome + ", já possui esse PlanoPgto (Convênio e NrPlano).")
-			}
-		}
-	}
-	return nil
 }

@@ -1,9 +1,8 @@
 package main
 
 import (
-	"Agenda/pkgs/planopgto"
-	"fmt"
-	"os"
+	"Agenda/controllers"
+	"Agenda/models"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -15,19 +14,19 @@ func main() {
 	//
 
 	// Carregar as configurações e verifica a conexão com o banco
-	inicializaAmbiente()
+	controllers.InicializaAmbiente()
 
 	// TESTES
 	// var err error
 
 	// Inicialização de algumas variáveis pra teste da Estrutra de Dados
 	// var d, _ = time.Parse("02/01/2006", "22/06/2023")
-	var d, _ = time.Parse("02/01/2006", "25/05/2025")
+	// var d, _ = time.Parse("02/01/2006", "25/05/2025")
 	// var d, _ = time.Parse("02/01/2006", "07/07/2027")
 	// var dur, _ = time.ParseDuration("1h")
 
 	// Inicializa Convênio e Plano
-	// convTeste := convenio.Convenio{NomeConv: "Sul America", Endereco: "Rua das Nações,163", DataContratoConv: d1, Indisponivel: false}
+	// convTeste := models.Convenio{NomeConv: "Sul America", Endereco: "Rua das Nações,163", DataContratoConv: d1, Indisponivel: false}
 	// criaConvenio(convTeste)
 
 	//  Retorna Conv
@@ -38,7 +37,7 @@ func main() {
 	// }
 
 	// fmt.Println("Verificando o plano:", planoTeste.Convenio.NomeConv, "nos convenios:", listaConvs)
-	// err = planopgto.VerificarPlano(planoTeste)
+	// err = models.VerificarPlano(planoTeste)
 	// if err != nil {
 	// 	fmt.Println("Erro:", err)
 	// 	os.Exit(1)
@@ -48,25 +47,25 @@ func main() {
 	//convTeste = getConvenios("sul")[0]
 	//Cria um Plano CASSI
 	// id, _ := primitive.ObjectIDFromHex("65998064fab6d835ca0f5a5e") //
-	// planoX := planopgto.PlanoPgto{ID: primitive.NewObjectID(), ConvenioId: id,
-	// 	NrPlano: "00000-01", DataValidade: d, Inativo: false, Particular: false}
-	// planoParticular := planopgto.PlanoPgto{Particular: true}
+	// planoX := models.PlanoPgto{ID: primitive.NewObjectID(), ConvenioId: id,
+	// NrPlano: "00000-01", DataValidade: d, Inativo: false, Particular: false}
+	// planoParticular := models.PlanoPgto{Particular: true}
 
-	// // fmt.Println("Checa PalnoX:", planopgto.ChecarPlanoPgto(planoX))
-	// // fmt.Println("Checa PalnoParticular:", planopgto.ChecarPlanoPgto(planoParticular))
+	// // fmt.Println("Checa PalnoX:", models.ChecarPlanoPgto(planoX))
+	// // fmt.Println("Checa PalnoParticular:", models.ChecarPlanoPgto(planoParticular))
 
-	// // Criadno Paciente com um PlanoPgto
-	// var pacienteA = paciente.Paciente{ID: primitive.NewObjectID(), Nome: "Gunther boeckmann", CPF: "891552974-04",
-	// 	NrCelular: 81999998888, Email: "biel@net.io", Endereco: "",
+	// Criadno Paciente com um PlanoPgto
+	// var pacienteA = models.Paciente{ID: primitive.NewObjectID(), Nome: "Gunther boeckmann", CPF: "891552974-04",
+	// 	NrCelular: 81999998888, Email: "biel@net.io", Endereco: "Rua Manoel H PEssoa, 552",
 	// 	Bloqueado: false}
 	// pacienteA.PlanosPgts = append(pacienteA.PlanosPgts, planoX)
 	// pacienteA.PlanosPgts = append(pacienteA.PlanosPgts, planoParticular)
 
-	// // fmt.Println("Checa PacienteA:", paciente.ChecarPaciente(pacienteA))
-	// // fmt.Println(printJSON(pacienteA))
-	// criaPaciente(pacienteA)
+	// fmt.Println("Checa PacienteA:", models.ChecarPaciente(pacienteA))
+	// fmt.Println(printJSON(pacienteA))
+	// controllers.CriaPaciente(pacienteA)
 
-	// var pacienteB = paciente.Paciente{ID: primitive.NewObjectID(), Nome: "Guisela Silva", CPF: "194630144-20",
+	// var pacienteB = models.Paciente{ID: primitive.NewObjectID(), Nome: "Guisela Silva", CPF: "194630144-20",
 	// 	NrCelular: 81999998888, Email: "guiga@net.io", Endereco: "SolMAr, 47",
 	// 	Bloqueado: false}
 	// pacienteB.PlanosPgts = append(pacienteB.PlanosPgts, planoParticular)
@@ -81,30 +80,33 @@ func main() {
 	// fmt.Println(printJSON(pacienteB))
 	// criaPaciente(pacienteB)
 
-	// Alterando Paciente
-	idpac, _ := primitive.ObjectIDFromHex("659d857381f0a20d852d7b39") // Pac: Gunther
-	// HabilitePacPorId(idpac, true)
-	pacienteA, err := getPacientePorId(idpac)
-	if err != nil {
-		fmt.Println("Não encotrou CPF:", pacienteA.ID, " Saindo...")
-
-		os.Exit(1)
-	}
-	convenioId, _ := primitive.ObjectIDFromHex("65998064fab6d835ca0f5a62")
-	// pID := primitive.NewObjectID()
-	pID, _ := primitive.ObjectIDFromHex("659de2c86c357efadababe38")
-	plano := planopgto.PlanoPgto{ID: pID, ConvenioId: convenioId, NrPlano: "00000-0", DataValidade: d}
-	// plano := planopgto.PlanoPgto{Particular: true}
-	// Adicionando novo plano
+	// // Alterando Paciente
+	var d, _ = time.Parse("02/01/2006", "25/05/2025")
+	idpac, _ := primitive.ObjectIDFromHex("65a424731b8ddd87b0e3e926") // Pac: Gunther
+	// // controllers.HabilitePacPorId(idpac, true)
+	// pacienteA, err := controllers.GetPacientePorId(idpac)
+	// if err != nil {
+	// 	fmt.Println("Não encotrou CPF:", pacienteA.ID, " Saindo...")
+	// 	os.Exit(1)
+	// }
+	convenioId, _ := primitive.ObjectIDFromHex("65a3f94a14e94f9bca4d4115")
+	pID := primitive.NewObjectID()
+	// pID, _ := primitive.ObjectIDFromHex("659de2c86c357efadababe38")
+	plano := models.PlanoPgto{ID: pID, ConvenioId: convenioId, NrPlano: "00000-1", DataValidade: d}
+	// plano := models.PlanoPgto{Particular: true}
+	// // Adicionando novo plano
 	// pacienteA.PlanosPgts = append(pacienteA.PlanosPgts, plano)
-	// pacienteA.ID = idpac
-	// atualizaPacPorId(idpac, pacienteA)
+	// // pacienteA.ID = idpac
+	// // pacienteA.PlanosPgts[0] = plano
+	// controllers.AtualizaPacPorId(idpac, pacienteA)
 	// listaPaciente("gunt")
 
 	// Deletetando Plano do Paciente
-	DelPlanoPgtoPaciente(idpac, plano)
+	// plano = models.PlanoPgto{ID: plano.ID}
+	// controllers.DelPlanoPgtoPaciente(idpac, plano)
+
 	// Inserindo Plano do Paciente
-	// InsPlanoPgtoPaciente(idpac, plano)
+	controllers.InsPlanoPgtoPaciente(idpac, plano)
 
 	// Deletando Paciente
 	// idpac, _ := primitive.ObjectIDFromHex("659b5cddfda4bbbe7de29781") // Pac: Gunther
@@ -129,33 +131,33 @@ func main() {
 	// 	fmt.Println(s)
 	// }
 
-	// Criar Convenio
+	// // Criar Convenio
 	// nomeConv := "CASSI"
 	// endConv := "Av Rosa e Silva,25"
-	// dataConv, _ := time.Parse("02/01/2006", "04/04/2025") // Data deve conter zero!!
-	// novoConv := convenio.Convenio{ID: primitive.NewObjectID(), NomeConv: nomeConv, Endereco: endConv, DataContratoConv: dataConv}
-	// criaConvenio(novoConv)
+	// dataConv, _ := time.Parse("02/01/2006", "04/04/2024") // Data deve conter zero!!
+	// novoConv := models.Convenio{ID: primitive.NewObjectID(), NomeConv: nomeConv, Endereco: endConv, DataContratoConv: dataConv}
+	// controllers.CriaConvenio(novoConv)
 
 	// nomeConv = "UNIMED"
 	// endConv = "Rua Solimões, 35"
-	// dataConv, _ = time.Parse("02/01/2006", "03/03/2035") // Data deve conter zero!!
-	// novoConv = convenio.Convenio{ID: primitive.NewObjectID(), NomeConv: nomeConv, Endereco: endConv, DataContratoConv: dataConv}
-	// criaConvenio(novoConv)
+	// dataConv, _ = time.Parse("02/01/2006", "03/03/2033") // Data deve conter zero!!
+	// novoConv = models.Convenio{ID: primitive.NewObjectID(), NomeConv: nomeConv, Endereco: endConv, DataContratoConv: dataConv, Indisponivel: false}
+	// controllers.CriaConvenio(novoConv)
 
 	// nomeConv = "Sul America"
 	// endConv = "Rua das Nações,163"
-	// dataConv, _ = time.Parse("02/01/2006", "04/04/2045") // Data deve conter zero!!
-	// novoConv = convenio.Convenio{ID: primitive.NewObjectID(), NomeConv: nomeConv, Endereco: endConv, DataContratoConv: dataConv}
-	// criaConvenio(novoConv)
+	// dataConv, _ = time.Parse("02/01/2006", "05/05/2055") // Data deve conter zero!!
+	// novoConv = models.Convenio{ID: primitive.NewObjectID(), NomeConv: nomeConv, Endereco: endConv, DataContratoConv: dataConv}
+	// controllers.CriaConvenio(novoConv)
 
-	// // Listar Convenios
-	// listaConvenio("*")
+	// Listar Convenios
+	// controllers.ListaConvenio("*")
 
 	// // Teste DELETE Convenio
-	// // plano := "*"
-	// todos := false
+	// plano := "teste"
+	// todos := true
 	// // var todos bool
-	// deletaConveniosPorNome("cassi", todos)
+	// controllers.DeletaConveniosPorNome(plano, todos)
 	// // listaConvenio("*")
 
 	// filtroNomeConv := "CASSI"
@@ -166,16 +168,19 @@ func main() {
 	// var d, _ = time.Parse("02/01/2006", "25/05/2025")
 	// var d, _ = time.Parse("02/01/2006", "07/07/2027")
 
-	// // Alterando Convenio
-	// ConvAlterado := convenio.Convenio{}
-	// ID, _ := primitive.ObjectIDFromHex("65998064fab6d835ca0f5a62") //Sul America
-	// ConvAlterado = convenio.Convenio{ID: ID, NomeConv: "Sul da America", DataContratoConv: d, Endereco: "Rua das Creolas, 467"}
-	// // fmt.Println("ConvAlterado antes:", ConvAlterado)
+	// Alterando Convenio
+	// ConvAlterado := models.Convenio{}
+	// NomeConv := "sul"
+	// idConv := controllers.GetConveniosPorNome(NomeConv)[0].ID
+	// ID, _ := primitive.ObjectIDFromHex("65a3f94a14e94f9bca4d4115") //Sul America
+	// ConvAlterado = models.Convenio{ID: idConv, NomeConv: "Sul da America", DataContratoConv: d, Endereco: "Rua das Creolas, 467"}
+	// fmt.Println("ConvAlterado antes:", ConvAlterado)
 
-	// atualizaConvPorId(ID, ConvAlterado)
-	// HabiliteConvPorId(ID, true)
+	// controllers.AtualizaConvPorId(idConv, ConvAlterado)
+	// fmt.Println(idConv)
+	// controllers.HabiliteConvPorId(idConv, true)
 
-	// listaConvenio("sul")
+	// controllers.ListaConvenio(NomeConv)
 
 	// atualizaConvPorNome("CASSI", ConvAlterado, false)
 	// novoConvs := getConvenioPorId(ID)

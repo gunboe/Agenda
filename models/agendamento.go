@@ -1,4 +1,4 @@
-package agendamento
+package models
 
 import (
 	"time"

@@ -1,7 +1,7 @@
 package armazenamento
 
 import (
-	"Agenda/pkgs/common"
+	config "Agenda/services"
 	"context"
 	"fmt"
 	"os"
@@ -23,7 +23,7 @@ var Cliente *mongo.Client
 func init() {
 	// Carrega as configurações
 	fmt.Print("Iniciando as Configurações do Armazenamento...")
-	conf := common.ConfigInicial
+	conf := config.ConfigInicial
 	fmt.Println(conf.ArmazemDados)
 
 	// Conectar e testar o acesso ao Armazem de Dados
@@ -48,7 +48,7 @@ func init() {
 }
 
 // Conectar ao armazenamento MongoDB
-func ConnectMongo(conf common.Config) (*mongo.Client, error) {
+func ConnectMongo(conf config.Config) (*mongo.Client, error) {
 	// Conectando ao MongoDB
 	clientOptions := options.Client().ApplyURI("mongodb://" + conf.ArmazemHost + ":" + strconv.Itoa(conf.ArmazemPort) + "/")
 	client, err := mongo.Connect(ctx, clientOptions)
