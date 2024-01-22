@@ -8,17 +8,18 @@ import (
 )
 
 type Paciente struct {
-	ID           primitive.ObjectID `bson:"_id,omitempty"`
-	Nome         string             `bson:"nome,omitempty"`
-	CPF          string             `bson:"cpf,omitempty"`
-	NrCelular    int64              `bson:"nr_celular,omitempty"`
-	Email        string             `bson:"email,omitempty"`
-	Endereco     string             `bson:"endereco,omitempty"`
-	PlanosPgts   []PlanoPgto        `bson:"planospgts,omitempty"`
-	CanaisPrefer []string           `bson:"canais_prefer,omitempty"`
-	Bloqueado    bool               `bson:"bloqueado"` // Default: Bloqueado=FALSE(NIL) -> Não-Bloqueado
-	secret       string             `bson:"secret,omitempty"`
-	obs          []string           `bson:"obs,omitempty"`
+	ID           primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+	Nome         string             `bson:"nome,omitempty" json:"nome" binding:"required"`
+	CPF          string             `bson:"cpf,omitempty" json:"cpf" binding:"required,valcpf"`
+	NrCelular    int64              `bson:"nr_celular,omitempty" json:"nr_celular" binding:"required,valnrcelular"`
+	Email        string             `bson:"email,omitempty" json:"email" binding:"email"`
+	Endereco     string             `bson:"endereco,omitempty" json:"endereco"`
+	PlanosPgts   []PlanoPgto        `bson:"planospgts,omitempty" json:"planospgts"`
+	CanaisPrefer []string           `bson:"canais_prefer,omitempty" json:"canais_prefer"`
+	// Campo "bloqueado": Default = FALSE(NIL) -> Não-Bloqueado
+	Bloqueado bool     `bson:"bloqueado" json:"bloqueado"`
+	secret    string   `bson:"secret,omitempty" json:"secret"`
+	obs       []string `bson:"obs,omitempty" json:"obs"`
 }
 
 // Função de Validação do Paciente
@@ -27,7 +28,7 @@ func ChecarPaciente(pac Paciente) error {
 		return errors.New("Paciente (" + pac.Nome + ") está Bloqueado, consulte as observações do Paciente.")
 	}
 	if pac.Nome == "" || pac.CPF == "" || pac.NrCelular == 0 {
-		return errors.New("Nome, CPF ou NrCelular  está vazio/zerado ou Paciente Bloqueado.")
+		return errors.New("Nome, CPF ou NrCelular está vazio/zerado.")
 	} else if !common.CPFvalido(pac.CPF) {
 		return errors.New("CPF inválido.")
 	} else if !common.NrCelValido(pac.NrCelular) {
@@ -41,12 +42,9 @@ func ChecarPaciente(pac Paciente) error {
 		if err != nil {
 			return err
 		}
-		// Checar PlanoPgto duplicados
+		// Checar PlanoPgto duplicados neste objeto Paciente (obs: Não checa os já adicionados no banco!)
 		for j := i + 1; j < len(pac.PlanosPgts); j++ {
 			if pac.PlanosPgts[i].ConvenioId == pac.PlanosPgts[j].ConvenioId && pac.PlanosPgts[i].NrPlano == pac.PlanosPgts[j].NrPlano {
-				if pac.PlanosPgts[i].Particular {
-					return errors.New("PlanoPgto Particular já existe, está duplicado.")
-				}
 				return errors.New("PlanoPgto Nr:" + pac.PlanosPgts[i].NrPlano + " já existe, está duplicado.")
 			}
 		}

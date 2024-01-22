@@ -15,6 +15,7 @@ type Agendamento struct {
 	AgenteID    primitive.ObjectID `bson:"agente"`
 	Confirmado  bool               `bson:"confirmado"`
 	PlanoPgtoID primitive.ObjectID `bson:"planopgto"`
+	Particular  bool               `bson:"particular"`
 	ValorPago   float32            `bson:"valor_pago"`
 	Pago        bool               `bson:"pago"`
 	Cancelado   bool               `bson:"cancelado"`

@@ -13,26 +13,17 @@ const PlanoPgto = "PlanoPgto"
 // ///////////////
 
 // (Check) Verifica se Plano de Pagamento está com os atributos corretos e se Existe no Armazém.
-func ChecaTodoPlanoPgto(plano models.PlanoPgto) error {
+func ChecaConvPlanoPgto(plano models.PlanoPgto) error {
 	var err error
-	// Checa os atributos do PalnoPgto
-	err = models.ChecarPlanoPgto(plano)
-	if err != nil {
-		return err
+	// Checa se o Convênio existe no Armazém
+	conv, err := GetConvenioPorId(plano.ConvenioId)
+	if conv.ID.IsZero() {
+		return errors.New(err.Error() + ". Convênio não cadastrado no armazém.")
 	} else {
-		// Se não for uma Planopgt PArticular, Checa se o Convênio deste Planopgto existe.
-		if !plano.Particular {
-			// Checa se o Convênio existe no Armazém
-			conv, err := GetConvenioPorId(plano.ConvenioId)
-			if conv.ID.IsZero() {
-				return errors.New(err.Error() + ". Convênio não cadastrado no armazém.")
-			} else {
-				// Se existir Checa os atributos do Convênio
-				err = models.ChecarConvenio(conv)
-				if err != nil {
-					return err
-				}
-			}
+		// Se existir Checa os atributos do Convênio
+		err = models.ChecarConvenio(conv)
+		if err != nil {
+			return err
 		}
 	}
 	return nil

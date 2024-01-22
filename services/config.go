@@ -31,6 +31,7 @@ type Config struct {
 	ArmazemCa        string
 	ArmazemChave     string
 	ArmazemExtra     string
+	WebServerPort    int
 }
 
 var ConfigInicial Config
@@ -88,6 +89,7 @@ func (conf *Config) CarregaConfig(file string) {
 	conf.ArmazemHost = sectionConfig.Key("host").String()
 	conf.ArmazemPort, _ = sectionConfig.Key("port").Int()
 	conf.ArmazemDatabase = sectionConfig.Key("database").String()
+	conf.WebServerPort, _ = sectionConfig.Key("webServerPort").Int()
 }
 
 func string2VetorInt(str string) ([]int, error) {

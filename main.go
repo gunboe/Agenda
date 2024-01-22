@@ -2,10 +2,7 @@ package main
 
 import (
 	"Agenda/controllers"
-	"Agenda/models"
-	"time"
-
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"Agenda/services/routes"
 )
 
 func main() {
@@ -15,6 +12,9 @@ func main() {
 
 	// Carregar as configurações e verifica a conexão com o banco
 	controllers.InicializaAmbiente()
+
+	// // Iniciando o Roteador
+	routes.InicializaRouter()
 
 	// TESTES
 	// var err error
@@ -81,18 +81,18 @@ func main() {
 	// criaPaciente(pacienteB)
 
 	// // Alterando Paciente
-	var d, _ = time.Parse("02/01/2006", "25/05/2025")
-	idpac, _ := primitive.ObjectIDFromHex("65a424731b8ddd87b0e3e926") // Pac: Gunther
+	// var d, _ = time.Parse("02/01/2006", "25/05/2025")
+	// idpac, _ := primitive.ObjectIDFromHex("65a424731b8ddd87b0e3e926") // Pac: Gunther
 	// // controllers.HabilitePacPorId(idpac, true)
 	// pacienteA, err := controllers.GetPacientePorId(idpac)
 	// if err != nil {
 	// 	fmt.Println("Não encotrou CPF:", pacienteA.ID, " Saindo...")
 	// 	os.Exit(1)
 	// }
-	convenioId, _ := primitive.ObjectIDFromHex("65a3f94a14e94f9bca4d4115")
-	pID := primitive.NewObjectID()
+	// convenioId, _ := primitive.ObjectIDFromHex("65a3f94a14e94f9bca4d4115")
+	// pID := primitive.NewObjectID()
 	// pID, _ := primitive.ObjectIDFromHex("659de2c86c357efadababe38")
-	plano := models.PlanoPgto{ID: pID, ConvenioId: convenioId, NrPlano: "00000-1", DataValidade: d}
+	// plano := models.PlanoPgto{ID: pID, ConvenioId: convenioId, NrPlano: "00000-1", DataValidade: d}
 	// plano := models.PlanoPgto{Particular: true}
 	// // Adicionando novo plano
 	// pacienteA.PlanosPgts = append(pacienteA.PlanosPgts, plano)
@@ -106,7 +106,7 @@ func main() {
 	// controllers.DelPlanoPgtoPaciente(idpac, plano)
 
 	// Inserindo Plano do Paciente
-	controllers.InsPlanoPgtoPaciente(idpac, plano)
+	// controllers.InsPlanoPgtoPaciente(idpac, plano)
 
 	// Deletando Paciente
 	// idpac, _ := primitive.ObjectIDFromHex("659b5cddfda4bbbe7de29781") // Pac: Gunther
@@ -199,4 +199,5 @@ func main() {
 
 	// fmt.Println("Listando todoso os Convenios")
 	// listaConvenio("*", "json")
+
 }

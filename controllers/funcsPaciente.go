@@ -4,6 +4,7 @@ import (
 	"Agenda/common"
 	"Agenda/models"
 	"Agenda/services/armazenamento"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -17,23 +18,25 @@ const Paciente = "Paciente"
 // CRUD Paciente
 /////////////////
 
-// (CREATE) Cria Paciente e salva no armazém
-func CriaPaciente(pac models.Paciente) {
+// (CREATE) Cria Paciente e salva no armazém ou retorna um erro
+func CriaPaciente(pac models.Paciente) error {
 	var err error
-	// Checas os PlanoPagtos do Paciente
-	for _, v := range pac.PlanosPgts {
+	// Checas os PlanoPagtos do Paciente e Adicionar um ID
+	for i, v := range pac.PlanosPgts {
+		// Cria ObjectID para o PlanosPgto
+		pac.PlanosPgts[i].ID = primitive.NewObjectID()
 		// Checa os Atributos do PlanoPgto
-		err = ChecaTodoPlanoPgto(v)
+		err = ChecaConvPlanoPgto(v)
 		if err != nil {
 			fmt.Println("Erro:("+Paciente+")", err)
-			return
+			return err
 		}
 	}
 	// Verifica os atributos do Paciente inclusive os PlanosPgto (com duplicação!)
 	err = models.ChecarPaciente(pac)
 	if err != nil {
 		fmt.Println("Erro:("+Paciente+")", err)
-		return
+		return err
 	}
 	// Checa se já existe Paciente pelo CPF no Armazem
 	var p models.Paciente
@@ -47,8 +50,10 @@ func CriaPaciente(pac models.Paciente) {
 			fmt.Println("Paciente Criado e armazenado:", result)
 		}
 	} else {
-		fmt.Println("Paciente:\"" + pac.Nome + "(CPF:" + pac.CPF + ")\" já existe com o mesmo CPF.")
+		err = errors.New("CPF (" + pac.CPF + ") já cadastrado.")
+		fmt.Println(err.Error())
 	}
+	return err
 }
 
 // (READ) Retorna um Vetor de Pacientes passando como parâmetro o "Nome" do Paciente.
@@ -127,7 +132,7 @@ func AtualizaPacPorId(id primitive.ObjectID, novoPac models.Paciente) {
 	// Checas os PlanoPagtos do Paciente
 	for _, v := range novoPac.PlanosPgts {
 		// Checa os Atributos do PlanoPgto
-		err = ChecaTodoPlanoPgto(v)
+		err = ChecaConvPlanoPgto(v)
 		if err != nil {
 			fmt.Println("Erro:("+Paciente+")", err)
 			return
@@ -183,7 +188,7 @@ func InsPlanoPgtoPaciente(id primitive.ObjectID, plano models.PlanoPgto) {
 		if err != nil {
 			fmt.Println("Erro: (" + Paciente + ") " + err.Error())
 		} else {
-			err = ChecaTodoPlanoPgto(plano)
+			err = ChecaConvPlanoPgto(plano)
 			if err != nil {
 				fmt.Println("Erro: (" + Paciente + ") " + err.Error())
 			} else {
