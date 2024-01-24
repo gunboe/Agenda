@@ -1,8 +1,9 @@
 package routes
 
 import (
-	"Agenda/controllers"
-	config "Agenda/services"
+	convControllers "Agenda/controllers/convenio"
+	pacControllers "Agenda/controllers/paciente"
+	"Agenda/services/config"
 	"fmt"
 	"log"
 
@@ -10,11 +11,14 @@ import (
 )
 
 func InitRoutes(r *gin.RouterGroup) {
-	r.GET("/getPacById/:pacId", controllers.FindPacById)
-	r.GET("/getPacByCPF/:pacCPF", controllers.FindPacByCPF)
-	r.POST("/createPac", controllers.CreatePac)
-	r.PUT("/updatePacById/:pacId", controllers.UpdatePac)
-	r.DELETE("/deletePacById/:pacId", controllers.DeletePacById)
+	// Paciente
+	r.GET("/getPacById/:pacId", pacControllers.FindPacById)
+	r.GET("/getPacByCPF/:pacCPF", pacControllers.FindPacByCPF)
+	r.POST("/createPac", pacControllers.CreatePac)
+	r.PUT("/updatePacById/:pacId", pacControllers.UpdatePac)
+	r.DELETE("/deletePacById/:pacId", pacControllers.DeletePacById)
+	// Convenio
+	r.POST("/createConv", convControllers.CreateConv)
 }
 
 func InicializaRouter() {

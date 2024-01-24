@@ -1,7 +1,7 @@
 package armazenamento
 
 import (
-	config "Agenda/services"
+	"Agenda/services/config"
 	"context"
 	"fmt"
 	"os"

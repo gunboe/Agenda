@@ -2,7 +2,7 @@ package armazenamento
 
 import (
 	"Agenda/models"
-	config "Agenda/services"
+	"Agenda/services/config"
 )
 
 // CRUD Agendamentos

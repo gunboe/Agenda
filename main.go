@@ -2,20 +2,28 @@ package main
 
 import (
 	"Agenda/controllers"
+	convControllers "Agenda/controllers/convenio"
+	"Agenda/models"
 	"Agenda/services/routes"
+	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func main() {
 	//
 	// Inicio da Rotina de verdade
 	//
-
 	// Carregar as configurações e verifica a conexão com o banco
 	controllers.InicializaAmbiente()
 
-	// // Iniciando o Roteador
-	routes.InicializaRouter()
+	// testes()
 
+	// // Iniciando o Roteador, após iniciado fica em Loop!
+	routes.InicializaRouter()
+}
+
+func testes() {
 	// TESTES
 	// var err error
 
@@ -144,11 +152,11 @@ func main() {
 	// novoConv = models.Convenio{ID: primitive.NewObjectID(), NomeConv: nomeConv, Endereco: endConv, DataContratoConv: dataConv, Indisponivel: false}
 	// controllers.CriaConvenio(novoConv)
 
-	// nomeConv = "Sul America"
-	// endConv = "Rua das Nações,163"
-	// dataConv, _ = time.Parse("02/01/2006", "05/05/2055") // Data deve conter zero!!
-	// novoConv = models.Convenio{ID: primitive.NewObjectID(), NomeConv: nomeConv, Endereco: endConv, DataContratoConv: dataConv}
-	// controllers.CriaConvenio(novoConv)
+	nomeConv := "Sul America"
+	endConv := "Rua das Nações,163"
+	dataConv, _ := time.Parse("02/01/2006", "05/05/2055") // Data deve conter zero!!
+	novoConv := models.Convenio{ID: primitive.NewObjectID(), NomeConv: nomeConv, Endereco: endConv, DataContratoConv: dataConv}
+	convControllers.CriaConvenio(novoConv)
 
 	// Listar Convenios
 	// controllers.ListaConvenio("*")

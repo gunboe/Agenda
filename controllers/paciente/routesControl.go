@@ -1,6 +1,7 @@
-package controllers
+package pacControllers
 
 import (
+	convControllers "Agenda/controllers/convenio"
 	"Agenda/models"
 	"Agenda/services/expandErro"
 	"Agenda/services/validation"
@@ -81,9 +82,24 @@ func FindConvByName(c *gin.Context) {
 
 // RC: Cria Convênio por Json
 func CreateConv(c *gin.Context) {
-	var pac models.Paciente
-	// pac = c.
-	CriaPaciente(pac)
+	var convRequest models.Convenio
+	var err error
+	// Realiza o Marshal dos Campos da requição no Objeto
+	err = c.ShouldBindJSON(&convRequest)
+	if err != nil {
+		// Existindo um erro, ele será enviado para validação do Convênio
+		reqErro := validation.ValidaCamposReq(err)
+		fmt.Println(err)
+		c.JSON(reqErro.Code, reqErro)
+		return
+	}
+	// Cria o Convenio se não houver erros legados(checagem de campo) ou Erros de Negocio
+	err = convControllers.CriaConvenio(convRequest)
+	if err != nil {
+		reqErro := expandErro.NewBadRequestError("Erros na regra de negócio: " + err.Error())
+		c.JSON(reqErro.Code, reqErro)
+		return
+	}
 }
 
 // RC: Deleta um Convênio por ID

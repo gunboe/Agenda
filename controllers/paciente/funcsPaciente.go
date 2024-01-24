@@ -1,7 +1,8 @@
-package controllers
+package pacControllers
 
 import (
 	"Agenda/common"
+	planoControllers "Agenda/controllers/planopgto"
 	"Agenda/models"
 	"Agenda/services/armazenamento"
 	"errors"
@@ -26,7 +27,7 @@ func CriaPaciente(pac models.Paciente) error {
 		// Cria ObjectID para o PlanosPgto
 		pac.PlanosPgts[i].ID = primitive.NewObjectID()
 		// Checa os Atributos do PlanoPgto
-		err = ChecaConvPlanoPgto(v)
+		err = planoControllers.ChecaConvPlanoPgto(v)
 		if err != nil {
 			fmt.Println("Erro:("+Paciente+")", err)
 			return err
@@ -132,7 +133,7 @@ func AtualizaPacPorId(id primitive.ObjectID, novoPac models.Paciente) {
 	// Checas os PlanoPagtos do Paciente
 	for _, v := range novoPac.PlanosPgts {
 		// Checa os Atributos do PlanoPgto
-		err = ChecaConvPlanoPgto(v)
+		err = planoControllers.ChecaConvPlanoPgto(v)
 		if err != nil {
 			fmt.Println("Erro:("+Paciente+")", err)
 			return
@@ -188,7 +189,7 @@ func InsPlanoPgtoPaciente(id primitive.ObjectID, plano models.PlanoPgto) {
 		if err != nil {
 			fmt.Println("Erro: (" + Paciente + ") " + err.Error())
 		} else {
-			err = ChecaConvPlanoPgto(plano)
+			err = planoControllers.ChecaConvPlanoPgto(plano)
 			if err != nil {
 				fmt.Println("Erro: (" + Paciente + ") " + err.Error())
 			} else {

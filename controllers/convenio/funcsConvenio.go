@@ -1,9 +1,10 @@
-package controllers
+package convControllers
 
 import (
 	"Agenda/common"
 	"Agenda/models"
 	"Agenda/services/armazenamento"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -18,18 +19,19 @@ const Convenio = "Convênio"
 /////////////////
 
 // (CREATE) Cria convênio e salva no armazém
-func CriaConvenio(conv models.Convenio) {
+func CriaConvenio(conv models.Convenio) error {
+
 	// Verifica o Convenio
 	err := models.ChecarConvenio(conv)
 	if err != nil {
 		fmt.Println("Erro:("+Convenio+")", err)
-		return
+		return err
 	}
 	// Checa se já existe Convenio pelo Nome
 	convs, err := armazenamento.GetConveniosByName(conv.NomeConv)
 	if err != nil {
 		fmt.Println("Erro:("+Convenio+")", err)
-		return
+		return err
 	}
 	if convs == nil {
 		result, err := armazenamento.CreateConvenio(conv)
@@ -39,8 +41,10 @@ func CriaConvenio(conv models.Convenio) {
 			fmt.Println("Convenio Criado e armazenado:", result)
 		}
 	} else {
-		fmt.Println("Convênio:\"" + conv.NomeConv + "\" já existe com o mesmo nome.")
+		err = errors.New("Convênio:\"" + conv.NomeConv + "\" já existe com o mesmo nome.")
+		fmt.Println(err.Error())
 	}
+	return err
 }
 
 // (READ) Retorna um Vetor de Convenios passando como parâmetro o "Nome" do convênio.

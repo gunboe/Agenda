@@ -1,7 +1,9 @@
 package controllers
 
 import (
-	config "Agenda/services"
+	convControllers "Agenda/controllers/convenio"
+	pacControllers "Agenda/controllers/paciente"
+	"Agenda/services/config"
 
 	"fmt"
 	"strings"
@@ -19,8 +21,8 @@ func InicializaAmbiente() {
 	// Conecta ao Banco
 	fmt.Println("Utilizando o DataBase:", conf.ArmazemDatabase)
 	// Testa o Banco relacionando todos os Convênnios e Pacientes
-	todosConvs := GetConveniosPorNome("*")
-	todosPacientes := GetPacientesPorNome("*")
+	todosConvs := convControllers.GetConveniosPorNome("*")
+	todosPacientes := pacControllers.GetPacientesPorNome("*")
 	// Listagem de Convenios
 	var listaConvs string
 	for _, v := range todosConvs {
