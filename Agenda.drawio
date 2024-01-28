@@ -1,6 +1,6 @@
-<mxfile host="app.diagrams.net" modified="2024-01-22T00:54:45.885Z" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" etag="Fei4huo7NvCimfUtnmQg" version="22.1.17" type="github" pages="2">
+<mxfile host="app.diagrams.net" modified="2024-01-26T14:39:47.763Z" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" etag="QH9GiUgpIACXNRHrzOtS" version="22.1.21" type="github" pages="2">
   <diagram name="Página-1" id="RvI4aXW_b_MmsLsYXffE">
-    <mxGraphModel dx="1042" dy="1792" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="954" dy="1819" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -252,10 +252,10 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="OqHoCiCi8qd6q0KAxtsT-21" value="&lt;font style=&quot;font-size: 14px;&quot;&gt;CONVENIO&lt;/font&gt;" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;strokeWidth=3;" parent="1" vertex="1">
-          <mxGeometry x="140" y="453" width="150" height="110" as="geometry" />
+          <mxGeometry x="140" y="453" width="150" height="120" as="geometry" />
         </mxCell>
-        <mxCell id="OqHoCiCi8qd6q0KAxtsT-22" value="&lt;b&gt;ID ObjectID&lt;br&gt;&lt;/b&gt;Plano STRING&lt;br&gt;Endereco STRING&lt;br&gt;DataContratoConv DATA&lt;br&gt;Indisponivel BOOLEAN" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" parent="OqHoCiCi8qd6q0KAxtsT-21" vertex="1">
-          <mxGeometry y="30" width="150" height="80" as="geometry" />
+        <mxCell id="OqHoCiCi8qd6q0KAxtsT-22" value="&lt;b&gt;ID ObjectID&lt;br&gt;&lt;/b&gt;NomeConv STRING&lt;br&gt;NrPrestador STRING&lt;br&gt;Endereco STRING&lt;br&gt;DataContratoConv DATA&lt;br&gt;Indisponivel BOOLEAN" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" parent="OqHoCiCi8qd6q0KAxtsT-21" vertex="1">
+          <mxGeometry y="30" width="150" height="90" as="geometry" />
         </mxCell>
         <mxCell id="OqHoCiCi8qd6q0KAxtsT-30" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1.006;exitY=0.633;exitDx=0;exitDy=0;exitPerimeter=0;endArrow=diamond;endFill=1;endSize=8;startArrow=none;startFill=0;startSize=8;" parent="1" source="ttyMI5n3wmWFBCh5jmVv-24" target="ttyMI5n3wmWFBCh5jmVv-79" edge="1">
           <mxGeometry relative="1" as="geometry">
