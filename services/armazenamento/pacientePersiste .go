@@ -191,7 +191,8 @@ func DeletePacienteByName(nome string, todos bool) (*mongo.DeleteResult, error) 
 	return result, nil
 }
 
-// Deleta os Pacientes de acordo com o "Nome" passado como parâmetro.
+// Deleta os Pacientes de acordo com o "ID" passado como parâmetro.
+// Se não encontrar um registro, NÃO retorna erro, mas result.DleteCount=0
 func DeletePacienteById(id primitive.ObjectID) (*mongo.DeleteResult, error) {
 	// Definir o Banco e a Coleção de Dados
 	Pacientes = Cliente.Database(config.ConfigInicial.ArmazemDatabase).Collection("Pacientes")

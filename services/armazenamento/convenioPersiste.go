@@ -54,6 +54,22 @@ func GetConveniosByName(nome string) ([]models.Convenio, error) {
 	return convs, nil
 }
 
+// (READ) Ler/Retorna Convênios por NrPrestador. Se não encontrar retorna um Erro e um Convenio com atributos zerados.
+func GetConveniosByNrPrestador(nr string) (models.Convenio, error) {
+	// Definir o Banco e a Coleção de Dados
+	Convenios = Cliente.Database(config.ConfigInicial.ArmazemDatabase).Collection("Convenios")
+	// Cria os filtros adequados de pesquisa no MongoDB
+	filter := bson.M{"nrprestador": nr}
+	// Cria um Convênio
+	var conv models.Convenio
+	// Alinha o cursor de busca
+	err := Convenios.FindOne(ctx, filter).Decode(&conv)
+	if err != nil {
+		return conv, err
+	}
+	return conv, nil
+}
+
 // (READ) Ler/Retorna Convênios por ID. Se não encontrar retorna um Erro e um Convenio com atributos zerados.
 func GetConvenioById(id primitive.ObjectID) (models.Convenio, error) {
 	// Definir o Banco e a Coleção de Dados

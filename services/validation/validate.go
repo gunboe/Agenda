@@ -5,7 +5,6 @@ import (
 	"Agenda/services/expandErro"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/gin-gonic/gin/binding"
@@ -20,7 +19,7 @@ func init() {
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
 		v.RegisterValidation("valnrcelular", ValidaNrCelular)
 		v.RegisterValidation("valcpf", ValidaCPF)
-		v.RegisterValidation("valdata", ValidaData)
+		v.RegisterValidation("datavencida", ValidaData)
 	}
 }
 
@@ -39,12 +38,7 @@ func ValidaCPF(fl validator.FieldLevel) bool {
 // TAG de verificação se a data é anterior a atual
 func ValidaData(fl validator.FieldLevel) bool {
 	var data time.Time
-	sdata := fmt.Sprint(fl.Field())
-	data, err := time.Parse("2006-01-02 15:04:05 -0700 MST", sdata)
-	if err != nil {
-		fmt.Println("Erro no PARSER da TAG ValidaData no Campo Data_Validade_Contrato!!\n", err)
-		return false
-	}
+	data = fl.Field().Interface().(time.Time)
 	return data.After(time.Now())
 }
 

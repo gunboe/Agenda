@@ -20,7 +20,6 @@ const Convenio = "Convênio"
 
 // (CREATE) Cria convênio e salva no armazém
 func CriaConvenio(conv models.Convenio) error {
-
 	// Verifica o Convenio
 	err := models.ChecarConvenio(conv)
 	if err != nil {
@@ -34,14 +33,24 @@ func CriaConvenio(conv models.Convenio) error {
 		return err
 	}
 	if convs == nil {
-		result, err := armazenamento.CreateConvenio(conv)
-		if err != nil {
+		// Checa se já existe Convênio pelo Nr Prestador
+		fmt.Println("conv.NrPrestador:", conv.NrPrestador)
+		c, err := armazenamento.GetConveniosByNrPrestador(conv.NrPrestador)
+		if err == nil {
+			err = errors.New("Novo Convênio:\"" + conv.NomeConv + "\" já existe com o mesmo Nr Prestador:" + c.NrPrestador + " mas com o Nome: " + c.NomeConv)
 			fmt.Println("Erro:("+Convenio+")", err)
-		} else {
-			fmt.Println("Convenio Criado e armazenado:", result)
+			return err
+		}
+		if c.ID.IsZero() {
+			result, err := armazenamento.CreateConvenio(conv)
+			if err != nil {
+				fmt.Println("Erro:("+Convenio+")", err)
+			} else {
+				fmt.Println("Convenio Criado e armazenado:", result)
+			}
 		}
 	} else {
-		err = errors.New("Convênio:\"" + conv.NomeConv + "\" já existe com o mesmo nome.")
+		err = errors.New("Convênio:\"" + conv.NomeConv + "\" já existe com o mesmo nome sob o Nr Prestador:" + conv.NrPrestador)
 		fmt.Println(err.Error())
 	}
 	return err
@@ -72,19 +81,22 @@ func GetConvenioPorId(id primitive.ObjectID) (models.Convenio, error) {
 	return conv, nil
 }
 
-// (list) Retorna Lista de Convenios no formato Json ou Bson passando como parâmetro o "Nome" do convênio.
+// (list) Retorna Lista de Convenios no formato "json" ou "bson" passando como parâmetro o "Nome" do convênio.
 // Se o argumento "nome" = "*", retornará todos os convênios armazenados.
-func ListaConvenio(nome string, formato ...string) {
+func ListaConvenio(nome string, formato ...string) interface{} {
 	convs, err := armazenamento.GetConveniosByName(nome)
 	if err != nil {
 		fmt.Println("Erro:("+Convenio+")", err)
+		return nil
 	} else {
 		// Se houver "formato" e do tipo "bson", imprima neste.
 		if len(formato) > 0 && strings.EqualFold(formato[0], "bson") {
-			fmt.Println("lista de Convênios:\n", convs)
+			fmt.Println("listando Convênios em bson")
+			return convs
 			// Caso contrário, use por padrão "Json"
 		} else {
-			fmt.Println("lista de Convênios:\n", common.PrintJSON(convs))
+			fmt.Println("listando Convênios em json")
+			return common.PrintJSON(convs)
 		}
 	}
 }
@@ -169,17 +181,23 @@ func DeletaConveniosPorNome(nome string, todos bool) {
 }
 
 // (DELETE) Deleta um Convênio específico utilizando o ID do Convênio como parâmetro de busca.
-func DeletaConvenioPorId(id primitive.ObjectID) {
+func DeletaConvenioPorId(id primitive.ObjectID) error {
+	var err error
 	// Checa se o Nome do Convenio está vazio
 	if id.IsZero() {
-		fmt.Println("Erro: ID nulo/vazio.")
+		fmt.Println("iD nulo/vazio")
 	} else {
 		result, err := armazenamento.DeleteConvenioById(id)
-		if err != nil {
-			fmt.Println("Erro:("+Convenio+")", err)
-			fmt.Println("Provavel que o Convênio:\"" + id.String() + "\" não exista no Armazém.")
-		} else {
-			fmt.Println("Convenios deletados:", result.DeletedCount)
+		if err == nil {
+			if result.DeletedCount == 0 {
+				err = errors.New("convenio não encontrado")
+				fmt.Println(err)
+				return err
+			} else {
+				fmt.Println(result.DeletedCount, "convenio deletado")
+				return nil
+			}
 		}
 	}
+	return err
 }

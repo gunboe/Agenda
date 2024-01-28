@@ -13,12 +13,16 @@ import (
 func InitRoutes(r *gin.RouterGroup) {
 	// Paciente
 	r.GET("/getPacById/:pacId", pacControllers.FindPacById)
+	r.GET("/getPacientes/:nome", pacControllers.FindPacientes)
 	r.GET("/getPacByCPF/:pacCPF", pacControllers.FindPacByCPF)
 	r.POST("/createPac", pacControllers.CreatePac)
 	r.PUT("/updatePacById/:pacId", pacControllers.UpdatePac)
 	r.DELETE("/deletePacById/:pacId", pacControllers.DeletePacById)
 	// Convenio
 	r.POST("/createConv", convControllers.CreateConv)
+	r.DELETE("/deleteConvById/:convId", convControllers.DeleteConvById)
+	r.GET("/getConvById/:convId", convControllers.FindConvById)
+	r.GET("/getConvenios/:nome", convControllers.FindConvenios)
 }
 
 func InicializaRouter() {

@@ -22,6 +22,10 @@ type Paciente struct {
 	obs       []string `bson:"obs,omitempty" json:"obs"`
 }
 
+// type Pacientes interface {
+// 	Pacientes() []Paciente
+// }
+
 // Função de Validação do Paciente
 func ChecarPaciente(pac Paciente) error {
 	if pac.Bloqueado {
