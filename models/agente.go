@@ -39,8 +39,7 @@ func VerificarAgente(ag Agente) error {
 	}
 	if ag.Nome == "" || ag.CPF == "" || ag.NrCelular == 0 || ag.Especialidades == nil || agsecret == "" {
 		return errors.New("Nome, CPF, NrCelular, Especialidades ou Secret está vazio/zerado.")
-	} else if !common.CPFvalido(ag.CPF) {
-
+	} else if _, ok := common.CPFvalido(ag.CPF); !ok {
 		return errors.New("CPF inválido.")
 	}
 	return nil

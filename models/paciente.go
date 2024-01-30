@@ -29,16 +29,16 @@ type Paciente struct {
 // Função de Validação do Paciente
 func ChecarPaciente(pac Paciente) error {
 	if pac.Bloqueado {
-		return errors.New("Paciente (" + pac.Nome + ") está Bloqueado, consulte as observações do Paciente.")
+		return errors.New("Paciente (" + pac.Nome + ") está bloqueado, consulte as observações do Paciente")
 	}
 	if pac.Nome == "" || pac.CPF == "" || pac.NrCelular == 0 {
-		return errors.New("Nome, CPF ou NrCelular está vazio/zerado.")
-	} else if !common.CPFvalido(pac.CPF) {
-		return errors.New("CPF inválido.")
+		return errors.New("Nome, CPF ou NrCelular está vazio/zerado")
+	} else if _, ok := common.CPFvalido(pac.CPF); !ok {
+		return errors.New("CPF inválido")
 	} else if !common.NrCelValido(pac.NrCelular) {
-		return errors.New("NrCelular no formato inválido.")
+		return errors.New("NrCelular no formato inválido")
 	} else if pac.Email != "" && !common.EmailValido(pac.Email) {
-		return errors.New("Email no formato inválido.")
+		return errors.New("Email no formato inválido")
 	}
 	// Verificar os PlanosPgto
 	for i, v := range pac.PlanosPgts {
@@ -49,7 +49,7 @@ func ChecarPaciente(pac Paciente) error {
 		// Checar PlanoPgto duplicados neste objeto Paciente (obs: Não checa os já adicionados no banco!)
 		for j := i + 1; j < len(pac.PlanosPgts); j++ {
 			if pac.PlanosPgts[i].ConvenioId == pac.PlanosPgts[j].ConvenioId && pac.PlanosPgts[i].NrPlano == pac.PlanosPgts[j].NrPlano {
-				return errors.New("PlanoPgto Nr:" + pac.PlanosPgts[i].NrPlano + " já existe, está duplicado.")
+				return errors.New("PlanoPgto Nr:" + pac.PlanosPgts[i].NrPlano + " já existe, está duplicado")
 			}
 		}
 	}

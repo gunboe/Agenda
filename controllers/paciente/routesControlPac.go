@@ -1,9 +1,11 @@
 package pacControllers
 
 import (
+	"Agenda/common"
 	"Agenda/models"
 	"Agenda/services/expandErro"
 	"Agenda/services/validation"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -14,6 +16,29 @@ import (
 /////////////////////////////////
 // Routes Control para Pacientes
 /////////////////////////////////
+
+// RC: Cria Paciente por Json
+func CreatePac(c *gin.Context) {
+	var pacRequest models.Paciente
+	var err error
+	// Realiza o Marshal dos Campos da requição no Objeto
+	err = c.ShouldBindJSON(&pacRequest)
+	if err != nil {
+		// Existindo um erro, ele será enviado para validação do Paciente
+		reqErro := validation.ValidaCamposReq(err)
+		fmt.Println(err)
+		c.JSON(reqErro.Code, reqErro)
+		return
+	}
+	// Cria o Paciente se não houver erros legados(checagem de campo) ou Erros de Negocio
+	result, err := CriaPaciente(pacRequest)
+	if err != nil {
+		reqErro := expandErro.NewBadRequestError("Erros na regra de negócio: " + err.Error())
+		c.JSON(reqErro.Code, reqErro)
+		return
+	}
+	c.JSON(http.StatusOK, result)
+}
 
 // RC: Retornar um objeto Json do Paciente por ID
 func FindPacById(c *gin.Context) {
@@ -55,26 +80,53 @@ func FindPacientes(c *gin.Context) {
 
 // RC: Retornar um objeto Json do Paciente por CPF
 func FindPacByCPF(c *gin.Context) {
-	// pac, err := GetPacientePorId(id)
+	var err error
+	cpf := c.Param("pacCPF")
+	// Checa o CPF recebido
+	if _, ok := common.CPFvalido(cpf); !ok {
+		err = errors.New("CPF inválido")
+		reqErro := expandErro.NewBadRequestError("Erro na pesquisa:(pacCPF) " + err.Error())
+		c.JSON(reqErro.Code, reqErro)
+		fmt.Println(reqErro)
+		return
+	}
+	// Tenta realizar a busca
+	pac, err := GetPacientePorCPF(cpf)
+	if err != nil {
+		reqErro := expandErro.NewNotFoundError("Erro na pesquisa: " + err.Error())
+		c.JSON(reqErro.Code, reqErro)
+		fmt.Println(reqErro.Mensagem)
+		return
+	}
+	fmt.Println("Paciente encontrado com id:", cpf)
+	c.JSON(http.StatusOK, pac)
 }
 
-// RC: Cria Paciente por Json
-func CreatePac(c *gin.Context) {
+// RC: Atualiza um Paciente por Json
+func UpdatePac(c *gin.Context) {
 	var pacRequest models.Paciente
+	var reqErro *expandErro.Lasquera
 	var err error
+	// Checa ID
+	id, err := primitive.ObjectIDFromHex(c.Param("pacId"))
+	if err != nil {
+		reqErro := expandErro.NewBadRequestError("erro na atualização do Paciente: (pacId) " + err.Error())
+		c.JSON(reqErro.Code, reqErro)
+		return
+	}
 	// Realiza o Marshal dos Campos da requição no Objeto
 	err = c.ShouldBindJSON(&pacRequest)
 	if err != nil {
-		// Existindo um erro, ele será enviado para validação do Paciente
+		// Existindo um erro, ele será enviado para validação do Objeto
 		reqErro := validation.ValidaCamposReq(err)
 		fmt.Println(err)
 		c.JSON(reqErro.Code, reqErro)
 		return
 	}
-	// Cria o Paciente se não houver erros legados(checagem de campo) ou Erros de Negocio
-	err = CriaPaciente(pacRequest)
+	// Atualiza o Objeto
+	err = AtualizaPacPorId(id, pacRequest)
 	if err != nil {
-		reqErro := expandErro.NewBadRequestError("Erros na regra de negócio: " + err.Error())
+		reqErro = expandErro.NewBadRequestError("erro na atualização do Paciente (regras de negócio): " + err.Error())
 		c.JSON(reqErro.Code, reqErro)
 		return
 	}
@@ -99,9 +151,4 @@ func DeletePacById(c *gin.Context) {
 		fmt.Println(reqErro.Mensagem)
 		return
 	}
-}
-
-// RC: Atualiza um Paciente por Json
-func UpdatePac(c *gin.Context) {
-	// pac, err := GetPacientePorId(id)
 }

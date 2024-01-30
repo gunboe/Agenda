@@ -19,18 +19,18 @@ const Convenio = "Convênio"
 /////////////////
 
 // (CREATE) Cria convênio e salva no armazém
-func CriaConvenio(conv models.Convenio) error {
+func CriaConvenio(conv models.Convenio) (interface{}, error) {
 	// Verifica o Convenio
 	err := models.ChecarConvenio(conv)
 	if err != nil {
 		fmt.Println("Erro:("+Convenio+")", err)
-		return err
+		return nil, err
 	}
 	// Checa se já existe Convenio pelo Nome
 	convs, err := armazenamento.GetConveniosByName(conv.NomeConv)
 	if err != nil {
 		fmt.Println("Erro:("+Convenio+")", err)
-		return err
+		return nil, err
 	}
 	if convs == nil {
 		// Checa se já existe Convênio pelo Nr Prestador
@@ -39,7 +39,7 @@ func CriaConvenio(conv models.Convenio) error {
 		if err == nil {
 			err = errors.New("Novo Convênio:\"" + conv.NomeConv + "\" já existe com o mesmo Nr Prestador:" + c.NrPrestador + " mas com o Nome: " + c.NomeConv)
 			fmt.Println("Erro:("+Convenio+")", err)
-			return err
+			return nil, err
 		}
 		if c.ID.IsZero() {
 			result, err := armazenamento.CreateConvenio(conv)
@@ -47,13 +47,14 @@ func CriaConvenio(conv models.Convenio) error {
 				fmt.Println("Erro:("+Convenio+")", err)
 			} else {
 				fmt.Println("Convenio Criado e armazenado:", result)
+				return result, nil
 			}
 		}
 	} else {
 		err = errors.New("Convênio:\"" + conv.NomeConv + "\" já existe com o mesmo nome sob o Nr Prestador:" + conv.NrPrestador)
 		fmt.Println(err.Error())
 	}
-	return err
+	return nil, err
 }
 
 // (READ) Retorna um Vetor de Convenios passando como parâmetro o "Nome" do convênio.
@@ -126,41 +127,53 @@ func AtualizaConvPorNome(nome string, novoConv models.Convenio, todos bool) {
 }
 
 // (UPDATE) Atualiza os Dados de um Convênio armazenado utilizando como parâmetro o ID do Convênio
-// e um novo Convênio com TODOS os atributos para serem checados antes de atualizados no Armazem.
-func AtualizaConvPorId(id primitive.ObjectID, novoConv models.Convenio) {
+// e um novo Convênio com os atributos necessários para serem checados antes de atualizados no Armazem.
+// Retorna erro caso não consiga encontrar o Convênio ou algum erro de verificação.
+func AtualizaConvPorId(id primitive.ObjectID, novoConv models.Convenio) error {
 	var err error
-	// Testa as alterações estão em conformidade
+	// Testa as alterações estão em conformidade com o Modelo
 	err = models.ChecarConvenio(novoConv)
 	if err != nil {
-		fmt.Println("Erro:("+Convenio+")", err)
-		return
+		err = errors.New("checagem de atributos: " + err.Error())
+		fmt.Println(err)
+		return err
 	}
 	// Atualiza os dados do Convênio
 	result, err := armazenamento.UpdateConvenioById(id, novoConv)
-	if err != nil {
-		fmt.Println("Erro:("+Convenio+")", err)
-	} else if result.ModifiedCount > 0 {
-		fmt.Println("Convenio atualizado:", id.String())
-	} else {
-		fmt.Println("Convênio:\"" + id.String() + "\" não foi alterado no Armazém.")
+	if err == nil {
+		if result.MatchedCount > 0 {
+			if result.ModifiedCount > 0 {
+				fmt.Println("convênio atualizado:", id.Hex())
+			} else {
+				fmt.Println("Convênio encontrado, mas nada foi atualizado")
+			}
+		} else {
+			err = errors.New("Convênio ID: " + id.Hex() + " NÃO encontrado")
+		}
 	}
+	return err
 }
 
 // (UPDATE) Disponibilizar um Convênio por ID. Caso um Convênio esteja marcado como Indisponível,
 // essa função o torna Disponível novamente para alteração de dados ou uso em PlanosPgtos.
-func HabiliteConvPorId(id primitive.ObjectID, b bool) {
+func HabiliteConvPorId(id primitive.ObjectID, b bool) error {
 	result, err := armazenamento.AllowConveioById(id, b)
-	if err != nil {
-		fmt.Println("Erro:("+Convenio+")", err)
-	} else if result.MatchedCount == 0 {
-		fmt.Println("Erro: Convênio não encontrado.")
-	} else {
-		if b {
-			fmt.Println("Convênio Disponibilizado.")
+	if err == nil {
+		if result.MatchedCount > 0 {
+			if result.ModifiedCount > 0 {
+				if b {
+					fmt.Println("convênio:", id.Hex(), "Disponível")
+				} else {
+					fmt.Println("convênio:", id.Hex(), "INdisponível")
+				}
+			} else {
+				fmt.Println("Convênio encontrado, mas nada foi alterado")
+			}
 		} else {
-			fmt.Println("Convênio Indisponibilizado.")
+			err = errors.New("Convênio ID: " + id.Hex() + " NÃO encontrado")
 		}
 	}
+	return err
 }
 
 // (DELETE) Deleta um Convênio específico ou mais de um utilizando o Nome do Convênio como parâmetro de busca.

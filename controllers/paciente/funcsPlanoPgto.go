@@ -24,18 +24,19 @@ const PlanoPgto = "PlanoPgto"
 func ValidaConvPlanoPgto(plano models.PlanoPgto) error {
 	// Verifica se o Plano está Ativo
 	if plano.Inativo {
-		return errors.New("plano inativo")
+		return errors.New("Plano inativo")
 		// Verifica Data de Validade
 	} else if plano.DataValidade.Before(time.Now()) {
-		return errors.New("data de validade do plano de pagamento está vencido")
+		return errors.New("Data de validade do plano de pagamento está vencida")
 		// Verifica se o Convênio existe no Armazém
 	} else {
 		conv, err := convControllers.GetConvenioPorId(plano.ConvenioId)
 		if conv.ID.IsZero() {
 			return errors.New(err.Error() + ". Convênio não cadastrado no armazém.")
+		} else {
+			return models.ChecarConvenio(conv)
 		}
 	}
-	return nil
 }
 
 // (UPDATE) Insere novo PlanoPgto em um determinado Paciente passando

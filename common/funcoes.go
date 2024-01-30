@@ -7,12 +7,13 @@ import (
 )
 
 // Checa CPF
-func CPFvalido(cpf string) bool {
+func CPFvalido(cpf string) (string, bool) {
+	var valido bool
 	// Remover pontos e traços do CPF
 	cpf = regexp.MustCompile(`[\D]`).ReplaceAllString(cpf, "")
 	// Verificar se o CPF tem 11 dígitos
 	if len(cpf) != 11 {
-		return false
+		return "", false
 	}
 	// Calcular os dígitos verificadores
 	soma := 0
@@ -36,7 +37,8 @@ func CPFvalido(cpf string) bool {
 		digitoVerificador2 = 0
 	}
 	// Verificar se os dígitos verificadores são iguais aos dígitos fornecidos
-	return digitoVerificador1 == int(cpf[9]-'0') && digitoVerificador2 == int(cpf[10]-'0')
+	valido = digitoVerificador1 == int(cpf[9]-'0') && digitoVerificador2 == int(cpf[10]-'0')
+	return cpf, valido
 }
 
 // Verifica se o Email é válido

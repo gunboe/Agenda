@@ -32,7 +32,8 @@ func ValidaNrCelular(fl validator.FieldLevel) bool {
 // TAG de verificação do CPF
 func ValidaCPF(fl validator.FieldLevel) bool {
 	cpf := fl.Field().String()
-	return common.CPFvalido(cpf)
+	_, ok := common.CPFvalido(cpf)
+	return ok
 }
 
 // TAG de verificação se a data é anterior a atual

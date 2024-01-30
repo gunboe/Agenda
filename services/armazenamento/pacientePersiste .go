@@ -1,6 +1,7 @@
 package armazenamento
 
 import (
+	"Agenda/common"
 	"Agenda/models"
 	"Agenda/services/config"
 
@@ -16,6 +17,8 @@ func CreatePaciente(pac models.Paciente) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
+	// Corrige o CPF para o padrão sem caracter especial, apenas dígitos
+	pac.CPF, _ = common.CPFvalido(pac.CPF)
 	// Definir o Banco e a Coleção de Dados
 	Pacientes = Cliente.Database(config.ConfigInicial.ArmazemDatabase).Collection("Pacientes")
 	// Inserir os Dados no contexto atual
@@ -73,6 +76,8 @@ func GetPacienteById(id primitive.ObjectID) (models.Paciente, error) {
 func GetPacienteByCPF(cpf string) (models.Paciente, error) {
 	// Definir o Banco e a Coleção de Dados
 	Pacientes = Cliente.Database(config.ConfigInicial.ArmazemDatabase).Collection("Pacientes")
+	// Corrige o CPF para o padrão sem caracter especial, apenas dígitos
+	cpf, _ = common.CPFvalido(cpf)
 	// Cria os filtros adequados de pesquisa no MongoDB
 	filter := bson.M{"cpf": cpf}
 	// Cria um Paciente
@@ -100,6 +105,8 @@ func UpdatePacienteByName(nome string, novoPac models.Paciente, todos bool) (*mo
 	update := bson.M{"$set": novoPac}
 	var result *mongo.UpdateResult
 	var err error
+	// Corrige o CPF para o padrão sem caracter especial, apenas dígitos
+	novoPac.CPF, _ = common.CPFvalido(novoPac.CPF)
 	if todos {
 		result, err = Pacientes.UpdateMany(ctx, filter, update)
 	} else {
@@ -122,6 +129,8 @@ func UpdatePacienteById(id primitive.ObjectID, novoPac models.Paciente) (*mongo.
 	update := bson.M{"$set": novoPac}
 	var result *mongo.UpdateResult
 	var err error
+	// Corrige o CPF para o padrão sem caracter especial, apenas dígitos
+	novoPac.CPF, _ = common.CPFvalido(novoPac.CPF)
 	result, err = Pacientes.UpdateByID(ctx, id, update)
 	if err != nil {
 		return nil, err

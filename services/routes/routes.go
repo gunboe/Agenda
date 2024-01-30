@@ -12,23 +12,28 @@ import (
 
 func InitRoutes(r *gin.RouterGroup) {
 	// Paciente
+	r.POST("/createPac", pacControllers.CreatePac)
 	r.GET("/getPacById/:pacId", pacControllers.FindPacById)
 	r.GET("/getPacientes/:nome", pacControllers.FindPacientes)
 	r.GET("/getPacByCPF/:pacCPF", pacControllers.FindPacByCPF)
-	r.POST("/createPac", pacControllers.CreatePac)
 	r.PUT("/updatePacById/:pacId", pacControllers.UpdatePac)
 	r.DELETE("/deletePacById/:pacId", pacControllers.DeletePacById)
 	// Convenio
 	r.POST("/createConv", convControllers.CreateConv)
-	r.DELETE("/deleteConvById/:convId", convControllers.DeleteConvById)
 	r.GET("/getConvById/:convId", convControllers.FindConvById)
 	r.GET("/getConvenios/:nome", convControllers.FindConvenios)
+	r.PUT("/updateConvById/:convId", convControllers.UpdateConv)
+	r.PATCH("/dispConvById/:convId", convControllers.DispConv)
+	r.DELETE("/deleteConvById/:convId", convControllers.DeleteConvById)
+
 }
 
 func InicializaRouter() {
 	// Iniciando o Roteador
 	router := gin.Default()
-	InitRoutes(&router.RouterGroup)
+	rv1 := router.Group("/api/v1")
+	// InitRoutes(&router.RouterGroup)
+	InitRoutes(rv1)
 	err := router.Run(":" + fmt.Sprint(config.ConfigInicial.WebServerPort))
 	if err != nil {
 		log.Fatal("Roteador falhou:", err)

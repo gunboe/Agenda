@@ -6,6 +6,7 @@ import (
 	"Agenda/services/validation"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -14,6 +15,29 @@ import (
 /////////////////////////////////
 // Routes Control para Convênio
 /////////////////////////////////
+
+// RC: Cria Convênio por Json
+func CreateConv(c *gin.Context) {
+	var convRequest models.Convenio
+	var err error
+	// Realiza o Marshal dos Campos da requição no Objeto
+	err = c.ShouldBindJSON(&convRequest)
+	if err != nil {
+		// Existindo um erro, ele será enviado para validação do Convênio
+		reqErro := validation.ValidaCamposReq(err)
+		fmt.Println(err)
+		c.JSON(reqErro.Code, reqErro)
+		return
+	}
+	// Cria o Convenio se não houver erros legados(checagem de campo) ou Erros de Negocio
+	result, err := CriaConvenio(convRequest)
+	if err != nil {
+		reqErro := expandErro.NewBadRequestError("erros na criação do convênio (regra de negócio): " + err.Error())
+		c.JSON(reqErro.Code, reqErro)
+		return
+	}
+	c.JSON(http.StatusOK, result)
+}
 
 // RC: Retornar um objeto Json do Convênio por ID
 func FindConvById(c *gin.Context) {
@@ -52,10 +76,18 @@ func FindConvenios(c *gin.Context) {
 	c.JSON(http.StatusOK, pacs)
 }
 
-// RC: Cria Convênio por Json
-func CreateConv(c *gin.Context) {
+// RC: Atualiza um Convênio por Json
+func UpdateConv(c *gin.Context) {
 	var convRequest models.Convenio
+	var reqErro *expandErro.Lasquera
 	var err error
+	// Checa ID
+	id, err := primitive.ObjectIDFromHex(c.Param("convId"))
+	if err != nil {
+		reqErro := expandErro.NewBadRequestError("erro na atualização do convênio: (convId) " + err.Error())
+		c.JSON(reqErro.Code, reqErro)
+		return
+	}
 	// Realiza o Marshal dos Campos da requição no Objeto
 	err = c.ShouldBindJSON(&convRequest)
 	if err != nil {
@@ -65,10 +97,40 @@ func CreateConv(c *gin.Context) {
 		c.JSON(reqErro.Code, reqErro)
 		return
 	}
-	// Cria o Convenio se não houver erros legados(checagem de campo) ou Erros de Negocio
-	err = CriaConvenio(convRequest)
+	// Atualiza o Convênio
+	err = AtualizaConvPorId(id, convRequest)
 	if err != nil {
-		reqErro := expandErro.NewBadRequestError("Erros na regra de negócio: " + err.Error())
+		reqErro = expandErro.NewBadRequestError("erro na atualização do convênio (regras de negócio): " + err.Error())
+		c.JSON(reqErro.Code, reqErro)
+		return
+	}
+}
+
+// RC: Atualiza um Convênio por Json
+func DispConv(c *gin.Context) {
+	// var convRequest models.Convenio
+	var reqErro *expandErro.Lasquera
+	var err error
+	// Checa ID
+	convId, err := primitive.ObjectIDFromHex(c.Param("convId"))
+	if err != nil {
+		reqErro := expandErro.NewBadRequestError("erro na disponibilização do convênio: (convId) " + err.Error())
+		c.JSON(reqErro.Code, reqErro)
+		return
+	}
+	// Obter o valor do atributo "disponivel"
+	s := c.Query("disponivel")
+	var b bool
+	b, err = strconv.ParseBool(s)
+	if err != nil {
+		reqErro := expandErro.NewBadRequestError("erro na disponibilização do convênio: (convId) " + err.Error())
+		c.JSON(reqErro.Code, reqErro)
+		return
+	}
+	// Tenta realizar a alterção do atributo
+	err = HabiliteConvPorId(convId, b)
+	if err != nil {
+		reqErro = expandErro.NewBadRequestError("erro na disponibilização do convênio (regras de negócio): " + err.Error())
 		c.JSON(reqErro.Code, reqErro)
 		return
 	}
@@ -92,9 +154,4 @@ func DeleteConvById(c *gin.Context) {
 		c.JSON(reqErro.Code, reqErro)
 		return
 	}
-}
-
-// RC: Atualiza um Convênio por Json
-func UpdateConv(c *gin.Context) {
-	// pac, err := GetPacientePorId(id)
 }
