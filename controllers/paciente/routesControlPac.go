@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -32,6 +33,37 @@ func CreatePac(c *gin.Context) {
 	}
 	// Cria o Paciente se não houver erros legados(checagem de campo) ou Erros de Negocio
 	result, err := CriaPaciente(pacRequest)
+	if err != nil {
+		reqErro := expandErro.NewBadRequestError("Erros na regra de negócio: " + err.Error())
+		c.JSON(reqErro.Code, reqErro)
+		return
+	}
+	c.JSON(http.StatusOK, result)
+}
+
+// Insere Plano de Pagamento em um Paciente passando um ID e o PlanoPgto
+func InserePlanoPac(c *gin.Context) {
+	// var pacRequest models.Paciente
+	var planoRequest models.PlanoPgto
+	var err error
+	// Realiza o Marshal dos Campos da requição no Objeto
+	err = c.ShouldBindJSON(&planoRequest)
+	if err != nil {
+		// Existindo um erro, ele será enviado para validação do Paciente
+		reqErro := validation.ValidaCamposReq(err)
+		fmt.Println(err)
+		c.JSON(reqErro.Code, reqErro)
+		return
+	}
+	// Obtem o ID e verifica se ID formatado corretamente (NECESSÁRIO?? será que o ShouldBind não checa o formato do ID?? )
+	id, err := primitive.ObjectIDFromHex(c.Param("pacId"))
+	if err != nil {
+		reqErro := expandErro.NewBadRequestError("Erro na inserção do Plano de Pagamento:(pacId) " + err.Error())
+		c.JSON(reqErro.Code, reqErro)
+		return
+	}
+	// Checa Erros de Negocio
+	result, err := InsPlanoPgtoPaciente(id, planoRequest)
 	if err != nil {
 		reqErro := expandErro.NewBadRequestError("Erros na regra de negócio: " + err.Error())
 		c.JSON(reqErro.Code, reqErro)
@@ -132,6 +164,34 @@ func UpdatePac(c *gin.Context) {
 	}
 }
 
+// RC: (Des)Bloqueia um Paciente por Query
+func BloqPac(c *gin.Context) {
+	var reqErro *expandErro.Lasquera
+	var err error
+	// Checa ID
+	pacId, err := primitive.ObjectIDFromHex(c.Param("pacId"))
+	if err != nil {
+		reqErro := expandErro.NewBadRequestError("erro no (Des)Bloqueio do Paciente: (pacId) " + err.Error())
+		c.JSON(reqErro.Code, reqErro)
+		return
+	}
+	// Obter o valor do atributo "disponivel"
+	s := c.Query("bloqueado")
+	b, err := strconv.ParseBool(s)
+	if err != nil {
+		reqErro := expandErro.NewBadRequestError("erro no (Des)Bloqueio do Paciente: " + err.Error())
+		c.JSON(reqErro.Code, reqErro)
+		return
+	}
+	// Tenta realizar a alterção do atributo
+	err = HabilitePacPorId(pacId, b)
+	if err != nil {
+		reqErro = expandErro.NewBadRequestError("erro no (Des)Bloqueio do Paciente: (regras de negócio): " + err.Error())
+		c.JSON(reqErro.Code, reqErro)
+		return
+	}
+}
+
 // RC: Deleta um Paciente por ID
 func DeletePacById(c *gin.Context) {
 	var err error
@@ -145,6 +205,35 @@ func DeletePacById(c *gin.Context) {
 	}
 	// Tenta realizar a deleção
 	err = DeletaPacientePorId(id)
+	if err != nil {
+		reqErro := expandErro.NewNotFoundError("Erro na deleção: " + err.Error())
+		c.JSON(reqErro.Code, reqErro)
+		fmt.Println(reqErro.Mensagem)
+		return
+	}
+}
+
+// RC: Deleta Plano de Pagamento por ID (PlanoPgto.ID)
+func DelPlanoPac(c *gin.Context) {
+	var err error
+	// Checa ID do Paciente
+	pacid, err := primitive.ObjectIDFromHex(c.Param("pacId"))
+	if err != nil {
+		reqErro := expandErro.NewBadRequestError("Erro na deleção: (pacId) " + err.Error())
+		c.JSON(reqErro.Code, reqErro)
+		fmt.Println(reqErro.Mensagem)
+		return
+	}
+	// Checa ID do PalnoPgto
+	planoid, err := primitive.ObjectIDFromHex(c.Param("planoId"))
+	if err != nil {
+		reqErro := expandErro.NewBadRequestError("Erro na deleção: (planoId) " + err.Error())
+		c.JSON(reqErro.Code, reqErro)
+		fmt.Println(reqErro.Mensagem)
+		return
+	}
+	// Tenta realizar a deleção
+	err = DeletaPlanoPorId(pacid, planoid)
 	if err != nil {
 		reqErro := expandErro.NewNotFoundError("Erro na deleção: " + err.Error())
 		c.JSON(reqErro.Code, reqErro)

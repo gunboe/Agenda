@@ -136,7 +136,7 @@ func AllowConveioById(id primitive.ObjectID, b bool) (*mongo.UpdateResult, error
 	// Definir o Banco e a Coleção de Dados
 	Convenios = Cliente.Database(config.ConfigInicial.ArmazemDatabase).Collection("Convenios")
 	// Define o valor a ser atualizado
-	update := bson.M{"$set": bson.M{"indisponivel": !b}}
+	update := bson.M{"$set": bson.M{"indisponivel": b}}
 	var result *mongo.UpdateResult
 	var err error
 	result, err = Convenios.UpdateByID(ctx, id, update)

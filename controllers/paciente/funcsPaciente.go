@@ -175,19 +175,24 @@ func AtualizaPacPorId(id primitive.ObjectID, novoPac models.Paciente) error {
 
 // (UPDATE) Bloquear/Desbloquear um Paciente por ID. Caso um ele esteja marcado como Bloqueado,
 // essa função o torna Disponível novamente para alteração de dados ou uso em Agendamentos.
-func HabilitePacPorId(id primitive.ObjectID, b bool) {
+func HabilitePacPorId(id primitive.ObjectID, b bool) error {
 	result, err := armazenamento.AllowPacienteById(id, b)
-	if err != nil {
-		fmt.Println("Erro:("+Paciente+")", err)
-	} else if result.MatchedCount == 0 {
-		fmt.Println("Erro: Paciente não encontrado.")
-	} else {
-		if b {
-			fmt.Println("Paciente Desbloqueado.")
+	if err == nil {
+		if result.MatchedCount > 0 {
+			if result.ModifiedCount > 0 {
+				if b {
+					fmt.Println("paciente:", id.Hex(), "Bloqueado")
+				} else {
+					fmt.Println("paciente:", id.Hex(), "Desbloqueado")
+				}
+			} else {
+				fmt.Println("Paciente encontrado, mas nada foi alterado")
+			}
 		} else {
-			fmt.Println("Paciente Bloqueado.")
+			err = errors.New("Paciente ID: " + id.Hex() + " NÃO encontrado")
 		}
 	}
+	return err
 }
 
 // (DELETE) Deleta um Paciente específico ou mais de um utilizando o Nome do Paciente como parâmetro de busca.
@@ -211,7 +216,7 @@ func DeletaPacientesPorNome(nome string, todos bool) {
 // Caso não encontre o Pac, retorna informação de erro que não encontrou
 func DeletaPacientePorId(id primitive.ObjectID) error {
 	var err error
-	// Checa se o Nome do Paciente está vazio
+	// Checa se o ID do Paciente está vazio
 	if id.IsZero() {
 		err = errors.New("id nulo/vazio")
 	} else {

@@ -107,7 +107,7 @@ func UpdateConv(c *gin.Context) {
 }
 
 // RC: Atualiza um Convênio por Json
-func DispConv(c *gin.Context) {
+func IndispConv(c *gin.Context) {
 	// var convRequest models.Convenio
 	var reqErro *expandErro.Lasquera
 	var err error
@@ -119,11 +119,10 @@ func DispConv(c *gin.Context) {
 		return
 	}
 	// Obter o valor do atributo "disponivel"
-	s := c.Query("disponivel")
-	var b bool
-	b, err = strconv.ParseBool(s)
+	s := c.Query("indisponivel")
+	b, err := strconv.ParseBool(s)
 	if err != nil {
-		reqErro := expandErro.NewBadRequestError("erro na disponibilização do convênio: (convId) " + err.Error())
+		reqErro := expandErro.NewBadRequestError("erro na disponibilização do convênio: " + err.Error())
 		c.JSON(reqErro.Code, reqErro)
 		return
 	}

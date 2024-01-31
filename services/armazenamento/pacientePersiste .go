@@ -145,7 +145,7 @@ func AllowPacienteById(id primitive.ObjectID, b bool) (*mongo.UpdateResult, erro
 	// Definir o Banco e a Coleção de Dados
 	Pacientes = Cliente.Database(config.ConfigInicial.ArmazemDatabase).Collection("Pacientes")
 	// Define o valor a ser atualizado
-	update := bson.M{"$set": bson.M{"bloqueado": !b}}
+	update := bson.M{"$set": bson.M{"bloqueado": b}}
 	var result *mongo.UpdateResult
 	var err error
 	result, err = Pacientes.UpdateByID(ctx, id, update)
@@ -218,7 +218,27 @@ func DeletePacienteById(id primitive.ObjectID) (*mongo.DeleteResult, error) {
 	return result, nil
 }
 
-// (DELETE) Deleta um PlanoPgto no Paciente por ID. Se não encontrar um Convênio NÃO retorna erro.
+// Deleta Plano de Pagamento de um Paciente de acordo com o "ID" do Paciente e do Plano passados como parâmetros.
+// Se não encontrar um registro, NÃO retorna erro, mas result.MatchedCount=0
+func DeletePlanoPorId(pacid, planoid primitive.ObjectID) (*mongo.UpdateResult, error) {
+	// Definir o Banco e a Coleção de Dados
+	Pacientes = Cliente.Database(config.ConfigInicial.ArmazemDatabase).Collection("Pacientes")
+	// Inserir os Dados no contexto atual
+	var result *mongo.UpdateResult
+	// Cria os filtros adequados de pesquisa no MongoDB
+	filter := bson.M{"_id": pacid, "planospgts._id": planoid}
+	update := bson.M{"$pull": bson.M{"planospgts": bson.M{"_id": planoid}}}
+	var err error
+	result, err = Pacientes.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return nil, err
+	}
+	// Retornar o resultado
+	return result, nil
+}
+
+// (DEPRECATED) Deleta um PlanoPgto do Paciente informando o ID do Paciente e o PlanoPgto a ser removido.
+// Se não encontrar um PlanoPgto NÃO retorna erro.
 func DelPlanoPgtoPacienteById(id primitive.ObjectID, plano models.PlanoPgto) (*mongo.UpdateResult, error) {
 	// Definir o Banco e a Coleção de Dados
 	Pacientes = Cliente.Database(config.ConfigInicial.ArmazemDatabase).Collection("Pacientes")

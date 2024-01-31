@@ -9,10 +9,10 @@ import (
 
 type PlanoPgto struct {
 	ID           primitive.ObjectID `bson:"_id,omitempty" json:"id"`
-	ConvenioId   primitive.ObjectID `bson:"convenio,omitempty" json:"convenio"`
-	NrPlano      string             `bson:"nr_plano,omitempty" json:"nr_plano"`
-	DataValidade time.Time          `bson:"data_validade_plano,omitempty" json:"data_validade_plano"`
-	Inativo      bool               `bson:"inativo"    json:"inativo"` // Default: Inativo=FALSE(NIL)    -> Ativo
+	ConvenioId   primitive.ObjectID `bson:"convenio,omitempty" json:"convenio" binding:"required"`
+	NrPlano      string             `bson:"nr_plano,omitempty" json:"nr_plano" binding:"required"`
+	DataValidade time.Time          `bson:"data_validade_plano,omitempty" json:"data_validade_plano"  binding:"required,datavencida"`
+	Inativo      bool               `bson:"inativo" json:"inativo"` // Default: Inativo=FALSE(NIL)    -> Ativo
 }
 
 // (Check) Checa os Campos do Plano de Pagamento com os atributos corretos,

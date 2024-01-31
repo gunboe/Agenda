@@ -162,9 +162,9 @@ func HabiliteConvPorId(id primitive.ObjectID, b bool) error {
 		if result.MatchedCount > 0 {
 			if result.ModifiedCount > 0 {
 				if b {
-					fmt.Println("convênio:", id.Hex(), "Disponível")
+					fmt.Println("convênio:", id.Hex(), "Indisponível")
 				} else {
-					fmt.Println("convênio:", id.Hex(), "INdisponível")
+					fmt.Println("convênio:", id.Hex(), "Disponível")
 				}
 			} else {
 				fmt.Println("Convênio encontrado, mas nada foi alterado")
