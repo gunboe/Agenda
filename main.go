@@ -1,10 +1,13 @@
 package main
 
 import (
-	"Agenda/controllers"
 	convControllers "Agenda/controllers/convenio"
+	pacControllers "Agenda/controllers/paciente"
 	"Agenda/models"
+	"Agenda/services/config"
 	"Agenda/services/routes"
+	"fmt"
+	"strings"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -15,12 +18,45 @@ func main() {
 	// Inicio da Rotina de verdade
 	//
 	// Carregar as configurações e verifica a conexão com o banco
-	controllers.InicializaAmbiente()
+	inicializaAmbiente()
 
 	// testes()
 
 	// // Iniciando o Roteador, após iniciado fica em Loop!
 	routes.InicializaRouter()
+}
+
+////////////////////////////
+// Função de Inicialização
+////////////////////////////
+
+// Inicializa o ambiente
+func inicializaAmbiente() {
+	// Carrega as configurações
+	var conf config.Config
+	conf = config.ConfigInicial
+	// Conecta ao Banco
+	fmt.Println("Utilizando o DataBase:", conf.ArmazemDatabase)
+	// Testa o Banco relacionando todos os Convênnios e Pacientes
+	todosConvs := convControllers.GetConveniosPorNome("*")
+	todosPacientes := pacControllers.GetPacientesPorNome("*")
+	// Listagem de Convenios
+	var listaConvs string
+	for _, v := range todosConvs {
+		listaConvs += " \"" + v.NomeConv + "\""
+	}
+	listaConvs = strings.TrimSpace(listaConvs)
+	fmt.Println("Lista de Todos os Convenios:", listaConvs)
+	// Listagem de Pacientes
+	var listaPacs string
+	for _, p := range todosPacientes {
+		listaPacs += " \"" + p.Nome + "\""
+	}
+	listaPacs = strings.TrimSpace(listaPacs)
+	fmt.Println("Lista de Todos os Pacientes:", listaPacs)
+
+	// Avisa que está pronto
+	fmt.Println("Ambiente pronto para uso!\n")
 }
 
 func testes() {

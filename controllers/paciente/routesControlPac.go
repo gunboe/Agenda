@@ -2,9 +2,9 @@ package pacControllers
 
 import (
 	"Agenda/common"
+	"Agenda/controllers"
 	"Agenda/models"
 	"Agenda/services/expandErro"
-	"Agenda/services/validation"
 	"errors"
 	"fmt"
 	"net/http"
@@ -20,21 +20,17 @@ import (
 
 // RC: Cria Paciente por Json
 func CreatePac(c *gin.Context) {
+	// Avalia os atributos do Request de Paciente
 	var pacRequest models.Paciente
 	var err error
-	// Realiza o Marshal dos Campos da requição no Objeto
-	err = c.ShouldBindJSON(&pacRequest)
-	if err != nil {
-		// Existindo um erro, ele será enviado para validação do Paciente
-		reqErro := validation.ValidaCamposReq(err)
-		fmt.Println(err)
-		c.JSON(reqErro.Code, reqErro)
+	if err = controllers.AvaliarRequest(c, &pacRequest); err != nil {
 		return
 	}
 	// Cria o Paciente se não houver erros legados(checagem de campo) ou Erros de Negocio
 	result, err := CriaPaciente(pacRequest)
 	if err != nil {
 		reqErro := expandErro.NewBadRequestError("Erros na regra de negócio: " + err.Error())
+		fmt.Println(reqErro)
 		c.JSON(reqErro.Code, reqErro)
 		return
 	}
@@ -47,18 +43,14 @@ func InserePlanoPac(c *gin.Context) {
 	var planoRequest models.PlanoPgto
 	var err error
 	// Realiza o Marshal dos Campos da requição no Objeto
-	err = c.ShouldBindJSON(&planoRequest)
-	if err != nil {
-		// Existindo um erro, ele será enviado para validação do Paciente
-		reqErro := validation.ValidaCamposReq(err)
-		fmt.Println(err)
-		c.JSON(reqErro.Code, reqErro)
+	if err = controllers.AvaliarRequest(c, &planoRequest); err != nil {
 		return
 	}
-	// Obtem o ID e verifica se ID formatado corretamente (NECESSÁRIO?? será que o ShouldBind não checa o formato do ID?? )
+	// Obtem o ID e verifica se ID formatado corretamente
 	id, err := primitive.ObjectIDFromHex(c.Param("pacId"))
 	if err != nil {
 		reqErro := expandErro.NewBadRequestError("Erro na inserção do Plano de Pagamento:(pacId) " + err.Error())
+		fmt.Println(reqErro)
 		c.JSON(reqErro.Code, reqErro)
 		return
 	}
@@ -66,6 +58,7 @@ func InserePlanoPac(c *gin.Context) {
 	result, err := InsPlanoPgtoPaciente(id, planoRequest)
 	if err != nil {
 		reqErro := expandErro.NewBadRequestError("Erros na regra de negócio: " + err.Error())
+		fmt.Println(reqErro)
 		c.JSON(reqErro.Code, reqErro)
 		return
 	}
@@ -78,6 +71,7 @@ func FindPacById(c *gin.Context) {
 	id, err := primitive.ObjectIDFromHex(c.Param("pacId"))
 	if err != nil {
 		reqErro := expandErro.NewBadRequestError("Erro na pesquisa:(pacId) " + err.Error())
+		fmt.Println(reqErro)
 		c.JSON(reqErro.Code, reqErro)
 		return
 	}
@@ -86,7 +80,7 @@ func FindPacById(c *gin.Context) {
 	if err != nil {
 		reqErro := expandErro.NewNotFoundError("Erro na pesquisa: " + err.Error())
 		c.JSON(reqErro.Code, reqErro)
-		fmt.Println(reqErro.Mensagem)
+		fmt.Println(reqErro)
 		return
 	}
 	fmt.Println("paciente encontrado com id:", id)
@@ -100,13 +94,13 @@ func FindPacientes(c *gin.Context) {
 	pacs := ListaPaciente(c.Param("nome"), "bson")
 	jsize := len(pacs.([]models.Paciente))
 	if jsize == 0 {
-		reqErro := expandErro.NewNotFoundError("erro na pesquisa: " + "paciente(s) não encontrado(s)")
+		reqErro := expandErro.NewNotFoundError("Erro na pesquisa: pacientes não encontrados")
+		fmt.Println(reqErro)
 		c.JSON(reqErro.Code, reqErro)
-		fmt.Println(reqErro.Mensagem)
 		return
 	}
 	// Converte o Tipo Interface no Tipo dos dados reais e calucula o tamanho do array
-	fmt.Println("paciente(s) encontrado(s):", jsize)
+	fmt.Println("Paciente(s) encontrado(s):", jsize)
 	c.JSON(http.StatusOK, pacs)
 }
 
@@ -118,19 +112,19 @@ func FindPacByCPF(c *gin.Context) {
 	if _, ok := common.CPFvalido(cpf); !ok {
 		err = errors.New("CPF inválido")
 		reqErro := expandErro.NewBadRequestError("Erro na pesquisa:(pacCPF) " + err.Error())
-		c.JSON(reqErro.Code, reqErro)
 		fmt.Println(reqErro)
+		c.JSON(reqErro.Code, reqErro)
 		return
 	}
 	// Tenta realizar a busca
 	pac, err := GetPacientePorCPF(cpf)
 	if err != nil {
 		reqErro := expandErro.NewNotFoundError("Erro na pesquisa: " + err.Error())
+		fmt.Println(reqErro)
 		c.JSON(reqErro.Code, reqErro)
-		fmt.Println(reqErro.Mensagem)
 		return
 	}
-	fmt.Println("Paciente encontrado com id:", cpf)
+	fmt.Println("Paciente encontrado com CPF:", cpf)
 	c.JSON(http.StatusOK, pac)
 }
 
@@ -142,23 +136,20 @@ func UpdatePac(c *gin.Context) {
 	// Checa ID
 	id, err := primitive.ObjectIDFromHex(c.Param("pacId"))
 	if err != nil {
-		reqErro := expandErro.NewBadRequestError("erro na atualização do Paciente: (pacId) " + err.Error())
+		reqErro := expandErro.NewBadRequestError("Erro na atualização do Paciente: (pacId) " + err.Error())
+		fmt.Println(reqErro)
 		c.JSON(reqErro.Code, reqErro)
 		return
 	}
 	// Realiza o Marshal dos Campos da requição no Objeto
-	err = c.ShouldBindJSON(&pacRequest)
-	if err != nil {
-		// Existindo um erro, ele será enviado para validação do Objeto
-		reqErro := validation.ValidaCamposReq(err)
-		fmt.Println(err)
-		c.JSON(reqErro.Code, reqErro)
+	if err = controllers.AvaliarRequest(c, &pacRequest); err != nil {
 		return
 	}
 	// Atualiza o Objeto
 	err = AtualizaPacPorId(id, pacRequest)
 	if err != nil {
-		reqErro = expandErro.NewBadRequestError("erro na atualização do Paciente (regras de negócio): " + err.Error())
+		reqErro = expandErro.NewBadRequestError("Erro na atualização do Paciente (regras de negócio): " + err.Error())
+		fmt.Println(reqErro)
 		c.JSON(reqErro.Code, reqErro)
 		return
 	}
@@ -171,7 +162,8 @@ func BloqPac(c *gin.Context) {
 	// Checa ID
 	pacId, err := primitive.ObjectIDFromHex(c.Param("pacId"))
 	if err != nil {
-		reqErro := expandErro.NewBadRequestError("erro no (Des)Bloqueio do Paciente: (pacId) " + err.Error())
+		reqErro = expandErro.NewBadRequestError("Erro no (Des)Bloqueio do Paciente: (pacId) " + err.Error())
+		fmt.Println(reqErro)
 		c.JSON(reqErro.Code, reqErro)
 		return
 	}
@@ -179,14 +171,16 @@ func BloqPac(c *gin.Context) {
 	s := c.Query("bloqueado")
 	b, err := strconv.ParseBool(s)
 	if err != nil {
-		reqErro := expandErro.NewBadRequestError("erro no (Des)Bloqueio do Paciente: " + err.Error())
+		reqErro = expandErro.NewBadRequestError("Erro no (Des)Bloqueio do Paciente: " + err.Error())
+		fmt.Println(reqErro)
 		c.JSON(reqErro.Code, reqErro)
 		return
 	}
 	// Tenta realizar a alterção do atributo
 	err = HabilitePacPorId(pacId, b)
 	if err != nil {
-		reqErro = expandErro.NewBadRequestError("erro no (Des)Bloqueio do Paciente: (regras de negócio): " + err.Error())
+		reqErro = expandErro.NewBadRequestError("Erro no (Des)Bloqueio do Paciente: (regras de negócio): " + err.Error())
+		fmt.Println(reqErro)
 		c.JSON(reqErro.Code, reqErro)
 		return
 	}
@@ -199,16 +193,16 @@ func DeletePacById(c *gin.Context) {
 	id, err := primitive.ObjectIDFromHex(c.Param("pacId"))
 	if err != nil {
 		reqErro := expandErro.NewBadRequestError("Erro na deleção: (pacId) " + err.Error())
+		fmt.Println(reqErro)
 		c.JSON(reqErro.Code, reqErro)
-		fmt.Println(reqErro.Mensagem)
 		return
 	}
 	// Tenta realizar a deleção
 	err = DeletaPacientePorId(id)
 	if err != nil {
 		reqErro := expandErro.NewNotFoundError("Erro na deleção: " + err.Error())
+		fmt.Println(reqErro)
 		c.JSON(reqErro.Code, reqErro)
-		fmt.Println(reqErro.Mensagem)
 		return
 	}
 }
@@ -220,24 +214,24 @@ func DelPlanoPac(c *gin.Context) {
 	pacid, err := primitive.ObjectIDFromHex(c.Param("pacId"))
 	if err != nil {
 		reqErro := expandErro.NewBadRequestError("Erro na deleção: (pacId) " + err.Error())
+		fmt.Println(reqErro)
 		c.JSON(reqErro.Code, reqErro)
-		fmt.Println(reqErro.Mensagem)
 		return
 	}
-	// Checa ID do PalnoPgto
+	// Checa ID do PlanoPgto
 	planoid, err := primitive.ObjectIDFromHex(c.Param("planoId"))
 	if err != nil {
 		reqErro := expandErro.NewBadRequestError("Erro na deleção: (planoId) " + err.Error())
+		fmt.Println(reqErro)
 		c.JSON(reqErro.Code, reqErro)
-		fmt.Println(reqErro.Mensagem)
 		return
 	}
 	// Tenta realizar a deleção
 	err = DeletaPlanoPorId(pacid, planoid)
 	if err != nil {
 		reqErro := expandErro.NewNotFoundError("Erro na deleção: " + err.Error())
+		fmt.Println(reqErro)
 		c.JSON(reqErro.Code, reqErro)
-		fmt.Println(reqErro.Mensagem)
 		return
 	}
 }

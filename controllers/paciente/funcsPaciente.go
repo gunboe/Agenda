@@ -142,13 +142,13 @@ func AtualizaPacPorNome(nome string, novoPac models.Paciente, todos bool) {
 // (UPDATE) Atualiza os Dados de um Paciente armazenado utilizando como parâmetro o ID Paciente,
 func AtualizaPacPorId(id primitive.ObjectID, novoPac models.Paciente) error {
 	var err error
-	// Verifica o Paciente
+	// Verifica o Paciente e seus PlanosPgtos
 	err = models.ChecarPaciente(novoPac)
 	if err != nil {
 		fmt.Println("erro nos atributos:", err)
 		return err
 	}
-	// Checas os PlanoPagtos do Paciente
+	// Valida os PlanoPagtos do Paciente com os Convênios
 	for _, v := range novoPac.PlanosPgts {
 		// Checa os Atributos do PlanoPgto
 		err = ValidaConvPlanoPgto(v)

@@ -194,6 +194,7 @@ func DeletaConveniosPorNome(nome string, todos bool) {
 }
 
 // (DELETE) Deleta um Convênio específico utilizando o ID do Convênio como parâmetro de busca.
+// NÃO PERMITIR QUE REMOVA CONVENIO SE EXISTE PACIENTE USANDO ESTE!!!!
 func DeletaConvenioPorId(id primitive.ObjectID) error {
 	var err error
 	// Checa se o Nome do Convenio está vazio

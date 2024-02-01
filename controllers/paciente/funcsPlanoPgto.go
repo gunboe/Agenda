@@ -44,29 +44,30 @@ func ValidaConvPlanoPgto(plano models.PlanoPgto) error {
 // como paramêtro o ID do Paciente e o novo Planopgto.
 func InsPlanoPgtoPaciente(id primitive.ObjectID, plano models.PlanoPgto) (interface{}, error) {
 	var err error
-	// obtem o Paciente pelo ID
+	// Obtem o Paciente pelo ID
 	pac, err := GetPacientePorId(id)
-	// Checa os dados do PlanoPgto do Paciente com os dados do Plano informado
 	if err != nil {
-		err = errors.New("Erro: Paciente não encontrado: " + err.Error())
+		err = errors.New("Paciente não encontrado: " + err.Error())
+		fmt.Println(err)
 		return nil, err
 	} else {
 		// Cria um novo ID para o Plano de Pagamento
 		plano.ID = primitive.NewObjectID()
 		// Adiciona o PlanoPgto do Paciente
 		pac.PlanosPgts = append(pac.PlanosPgts, plano)
-		// Chama a checagem do Modelo Paciente após o append do novo Plano
+		// Checa do Modelo Paciente após o append do novo Plano
 		err = models.ChecarPaciente(pac)
 		if err != nil {
+			fmt.Println(err)
 			return nil, err
 		} else {
 			err = ValidaConvPlanoPgto(plano)
 			if err != nil {
-				err = errors.New("Erro: Plano de Pagamento: " + err.Error())
+				err = errors.New("Plano de Pagamento: " + err.Error())
 				fmt.Println(err)
 				return nil, err
 			} else {
-				// Insere no MongoDB o novo PlanoPgto do Paciente
+				// Se tudo certo, Insere no MongoDB o novo PlanoPgto do Paciente
 				result, err := armazenamento.InsPlanoPgtoPacienteById(id, plano)
 				if err == nil {
 					if result.MatchedCount > 0 {
@@ -77,47 +78,16 @@ func InsPlanoPgtoPaciente(id primitive.ObjectID, plano models.PlanoPgto) (interf
 							err = errors.New("Plano de Pagamento não Inserido no Paciente: " + pac.Nome)
 						}
 					} else {
-						err = errors.New("Erro: Paciente não encontrado")
+						err = errors.New("Paciente não encontrado")
 					}
 				} else {
-					err = errors.New("Erro: Plano de Pagamento no Armazém: " + err.Error())
+					err = errors.New("Plano de Pagamento no Armazém: " + err.Error())
 				}
 			}
 			fmt.Println(err)
 			return nil, err
 		}
 	}
-}
-
-// (DEPRECATED) Deleta PlanoPgto de um determinado Paciente passando
-// como paramêtro o ID do Paciente e o Planopgto a ser removido.
-func DelPlanoPgtoPaciente(id primitive.ObjectID, plano models.PlanoPgto) error {
-	// obtem o Paciente pelo ID
-	pac, err := GetPacientePorId(id)
-	if err != nil {
-		err = errors.New("Erro: Paciente não encontrado")
-		fmt.Println(err)
-		return err
-	} else {
-		// Delete o PlanoPgto do Paciente com os dados do Plano informado
-		result, err := armazenamento.DelPlanoPgtoPacienteById(id, plano)
-		if err == nil {
-			if result.MatchedCount > 0 {
-				if result.ModifiedCount > 0 {
-					fmt.Println("Plano de Pagamento do Paciente deletado com sucesso:", pac.Nome)
-					return nil
-				} else {
-					err = errors.New("Plano de Pagamento do Paciente NÃO deletado: " + pac.Nome)
-				}
-			} else {
-				err = errors.New("Erro: Paciente não encontrado")
-			}
-		} else {
-			err = errors.New("Erro: Plano de Pagamento no Armazém: " + err.Error())
-		}
-	}
-	fmt.Println(err)
-	return err
 }
 
 // (DELETE) Deleta um Plano de Pagamento específico utilizando o ID do Plano como parâmetro de busca.
