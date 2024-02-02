@@ -11,7 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// Ambiente do MongoDB
+// Variáveis Globais do Ambiente do MongoDB
 var ctx = context.TODO()
 var Agendamentos *mongo.Collection
 var Convenios *mongo.Collection
@@ -19,7 +19,25 @@ var Pacientes *mongo.Collection
 var Agentes *mongo.Collection
 var Cliente *mongo.Client
 
-// Inicialização do serviço de armazenamento
+// Implementação da interface Database para MongoDB
+type MongoDB struct {
+	// campos específicos do MongoDB, se necessário
+	Client *mongo.Client
+}
+
+// Conectar ao MongoDB
+func (m *MongoDB) Connect() error {
+	// lógica de conexão com MongoDB
+	return nil // so para não ficar em erro
+}
+
+// Desconectar do MongoDB
+func (m *MongoDB) Close() error {
+	// lógica de fechamento de conexão
+	return nil // so para não ficar em erro
+}
+
+// Inicialização do serviço de armazenamento do MongoDB
 func init() {
 	// Carrega as configurações
 	fmt.Print("Iniciando as Configurações do Armazenamento...")

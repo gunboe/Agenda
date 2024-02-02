@@ -30,16 +30,16 @@ func CreatePac(c *gin.Context) {
 	result, err := CriaPaciente(pacRequest)
 	if err != nil {
 		reqErro := expandErro.NewBadRequestError("Erros na regra de negócio: " + err.Error())
-		fmt.Println(reqErro)
+
 		c.JSON(reqErro.Code, reqErro)
 		return
 	}
-	c.JSON(http.StatusOK, result)
+	// Processa e envia resposta (Qdo é para criação é necessário obter o ID do resultado do Mongo)
+	controllers.Resposta(c, result)
 }
 
 // Insere Plano de Pagamento em um Paciente passando um ID e o PlanoPgto
 func InserePlanoPac(c *gin.Context) {
-	// var pacRequest models.Paciente
 	var planoRequest models.PlanoPgto
 	var err error
 	// Realiza o Marshal dos Campos da requição no Objeto
@@ -50,7 +50,7 @@ func InserePlanoPac(c *gin.Context) {
 	id, err := primitive.ObjectIDFromHex(c.Param("pacId"))
 	if err != nil {
 		reqErro := expandErro.NewBadRequestError("Erro na inserção do Plano de Pagamento:(pacId) " + err.Error())
-		fmt.Println(reqErro)
+
 		c.JSON(reqErro.Code, reqErro)
 		return
 	}
@@ -58,11 +58,12 @@ func InserePlanoPac(c *gin.Context) {
 	result, err := InsPlanoPgtoPaciente(id, planoRequest)
 	if err != nil {
 		reqErro := expandErro.NewBadRequestError("Erros na regra de negócio: " + err.Error())
-		fmt.Println(reqErro)
+
 		c.JSON(reqErro.Code, reqErro)
 		return
 	}
-	c.JSON(http.StatusOK, result)
+	// Processa e envia resposta (Qdo é para criação é necessário obter o ID do resultado do Mongo)
+	controllers.Resposta(c, result)
 }
 
 // RC: Retornar um objeto Json do Paciente por ID
@@ -71,7 +72,7 @@ func FindPacById(c *gin.Context) {
 	id, err := primitive.ObjectIDFromHex(c.Param("pacId"))
 	if err != nil {
 		reqErro := expandErro.NewBadRequestError("Erro na pesquisa:(pacId) " + err.Error())
-		fmt.Println(reqErro)
+
 		c.JSON(reqErro.Code, reqErro)
 		return
 	}
@@ -80,7 +81,7 @@ func FindPacById(c *gin.Context) {
 	if err != nil {
 		reqErro := expandErro.NewNotFoundError("Erro na pesquisa: " + err.Error())
 		c.JSON(reqErro.Code, reqErro)
-		fmt.Println(reqErro)
+
 		return
 	}
 	fmt.Println("paciente encontrado com id:", id)
@@ -95,7 +96,7 @@ func FindPacientes(c *gin.Context) {
 	jsize := len(pacs.([]models.Paciente))
 	if jsize == 0 {
 		reqErro := expandErro.NewNotFoundError("Erro na pesquisa: pacientes não encontrados")
-		fmt.Println(reqErro)
+
 		c.JSON(reqErro.Code, reqErro)
 		return
 	}
@@ -112,7 +113,7 @@ func FindPacByCPF(c *gin.Context) {
 	if _, ok := common.CPFvalido(cpf); !ok {
 		err = errors.New("CPF inválido")
 		reqErro := expandErro.NewBadRequestError("Erro na pesquisa:(pacCPF) " + err.Error())
-		fmt.Println(reqErro)
+
 		c.JSON(reqErro.Code, reqErro)
 		return
 	}
@@ -120,7 +121,7 @@ func FindPacByCPF(c *gin.Context) {
 	pac, err := GetPacientePorCPF(cpf)
 	if err != nil {
 		reqErro := expandErro.NewNotFoundError("Erro na pesquisa: " + err.Error())
-		fmt.Println(reqErro)
+
 		c.JSON(reqErro.Code, reqErro)
 		return
 	}
@@ -137,7 +138,7 @@ func UpdatePac(c *gin.Context) {
 	id, err := primitive.ObjectIDFromHex(c.Param("pacId"))
 	if err != nil {
 		reqErro := expandErro.NewBadRequestError("Erro na atualização do Paciente: (pacId) " + err.Error())
-		fmt.Println(reqErro)
+
 		c.JSON(reqErro.Code, reqErro)
 		return
 	}
@@ -149,10 +150,12 @@ func UpdatePac(c *gin.Context) {
 	err = AtualizaPacPorId(id, pacRequest)
 	if err != nil {
 		reqErro = expandErro.NewBadRequestError("Erro na atualização do Paciente (regras de negócio): " + err.Error())
-		fmt.Println(reqErro)
+
 		c.JSON(reqErro.Code, reqErro)
 		return
 	}
+	// Processa e envia resposta (Qdo é para criação é necessário obter o ID do resultado do Mongo)
+	controllers.Resposta(c, id)
 }
 
 // RC: (Des)Bloqueia um Paciente por Query
@@ -160,10 +163,10 @@ func BloqPac(c *gin.Context) {
 	var reqErro *expandErro.Lasquera
 	var err error
 	// Checa ID
-	pacId, err := primitive.ObjectIDFromHex(c.Param("pacId"))
+	id, err := primitive.ObjectIDFromHex(c.Param("pacId"))
 	if err != nil {
 		reqErro = expandErro.NewBadRequestError("Erro no (Des)Bloqueio do Paciente: (pacId) " + err.Error())
-		fmt.Println(reqErro)
+
 		c.JSON(reqErro.Code, reqErro)
 		return
 	}
@@ -171,19 +174,23 @@ func BloqPac(c *gin.Context) {
 	s := c.Query("bloqueado")
 	b, err := strconv.ParseBool(s)
 	if err != nil {
-		reqErro = expandErro.NewBadRequestError("Erro no (Des)Bloqueio do Paciente: " + err.Error())
-		fmt.Println(reqErro)
+		if s == "" {
+			reqErro = expandErro.NewBadRequestError("Erro no Bloqueio: Query (bloqueado) não informado")
+		} else {
+			reqErro = expandErro.NewBadRequestError("Erro no Bloqueio: Query (bloqueado) deve ser true ou false, recebido: " + s)
+		}
 		c.JSON(reqErro.Code, reqErro)
 		return
 	}
 	// Tenta realizar a alterção do atributo
-	err = HabilitePacPorId(pacId, b)
+	err = HabilitePacPorId(id, b)
 	if err != nil {
 		reqErro = expandErro.NewBadRequestError("Erro no (Des)Bloqueio do Paciente: (regras de negócio): " + err.Error())
-		fmt.Println(reqErro)
 		c.JSON(reqErro.Code, reqErro)
 		return
 	}
+	// Processa e envia resposta (Qdo é para criação é necessário obter o ID do resultado do Mongo)
+	controllers.Resposta(c, id)
 }
 
 // RC: Deleta um Paciente por ID
@@ -193,7 +200,7 @@ func DeletePacById(c *gin.Context) {
 	id, err := primitive.ObjectIDFromHex(c.Param("pacId"))
 	if err != nil {
 		reqErro := expandErro.NewBadRequestError("Erro na deleção: (pacId) " + err.Error())
-		fmt.Println(reqErro)
+
 		c.JSON(reqErro.Code, reqErro)
 		return
 	}
@@ -201,10 +208,12 @@ func DeletePacById(c *gin.Context) {
 	err = DeletaPacientePorId(id)
 	if err != nil {
 		reqErro := expandErro.NewNotFoundError("Erro na deleção: " + err.Error())
-		fmt.Println(reqErro)
+
 		c.JSON(reqErro.Code, reqErro)
 		return
 	}
+	// Processa e envia resposta (Qdo é para criação é necessário obter o ID do resultado do Mongo)
+	controllers.Resposta(c, id)
 }
 
 // RC: Deleta Plano de Pagamento por ID (PlanoPgto.ID)
@@ -214,24 +223,26 @@ func DelPlanoPac(c *gin.Context) {
 	pacid, err := primitive.ObjectIDFromHex(c.Param("pacId"))
 	if err != nil {
 		reqErro := expandErro.NewBadRequestError("Erro na deleção: (pacId) " + err.Error())
-		fmt.Println(reqErro)
+
 		c.JSON(reqErro.Code, reqErro)
 		return
 	}
 	// Checa ID do PlanoPgto
-	planoid, err := primitive.ObjectIDFromHex(c.Param("planoId"))
+	id, err := primitive.ObjectIDFromHex(c.Param("planoId"))
 	if err != nil {
 		reqErro := expandErro.NewBadRequestError("Erro na deleção: (planoId) " + err.Error())
-		fmt.Println(reqErro)
+
 		c.JSON(reqErro.Code, reqErro)
 		return
 	}
 	// Tenta realizar a deleção
-	err = DeletaPlanoPorId(pacid, planoid)
+	err = DeletaPlanoPorId(pacid, id)
 	if err != nil {
 		reqErro := expandErro.NewNotFoundError("Erro na deleção: " + err.Error())
-		fmt.Println(reqErro)
+
 		c.JSON(reqErro.Code, reqErro)
 		return
 	}
+	// Processa e envia resposta (Qdo é para criação é necessário obter o ID do resultado do Mongo)
+	controllers.Resposta(c, id)
 }

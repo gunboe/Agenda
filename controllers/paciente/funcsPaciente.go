@@ -3,7 +3,7 @@ package pacControllers
 import (
 	"Agenda/common"
 	"Agenda/models"
-	"Agenda/services/armazenamento"
+	armazenamento "Agenda/services/armazenamento/mongodb"
 	"errors"
 	"fmt"
 	"strings"
@@ -103,12 +103,10 @@ func ListaPaciente(nome string, formato ...string) interface{} {
 		// Se houver "formato" e do tipo "bson", imprima neste.
 		if len(formato) > 0 && strings.EqualFold(formato[0], "bson") {
 			// fmt.Println("lista de Pacientes:\n", pacs)
-			fmt.Println("listando pacientes em bson")
 			return pacs
 			// Caso contrário, use por padrão "Json"
 		} else {
 			// fmt.Println("lista de Pacientes:\n", common.PrintJSON(pacs))
-			fmt.Println("listando pacientes em json")
 			return common.PrintJSON(pacs)
 		}
 	}

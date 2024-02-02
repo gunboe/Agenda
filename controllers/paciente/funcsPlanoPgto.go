@@ -3,7 +3,7 @@ package pacControllers
 import (
 	convControllers "Agenda/controllers/convenio"
 	"Agenda/models"
-	"Agenda/services/armazenamento"
+	armazenamento "Agenda/services/armazenamento/mongodb"
 	"errors"
 	"fmt"
 	"time"
@@ -73,7 +73,7 @@ func InsPlanoPgtoPaciente(id primitive.ObjectID, plano models.PlanoPgto) (interf
 					if result.MatchedCount > 0 {
 						if result.ModifiedCount > 0 {
 							fmt.Println("Plano adicionado com sucesso no Paciente:", pac.Nome)
-							return id, nil
+							return plano.ID, nil
 						} else {
 							err = errors.New("Plano de Pagamento não Inserido no Paciente: " + pac.Nome)
 						}

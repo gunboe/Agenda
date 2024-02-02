@@ -3,7 +3,7 @@ package convControllers
 import (
 	"Agenda/common"
 	"Agenda/models"
-	"Agenda/services/armazenamento"
+	armazenamento "Agenda/services/armazenamento/mongodb"
 	"errors"
 	"fmt"
 	"strings"
@@ -34,7 +34,6 @@ func CriaConvenio(conv models.Convenio) (interface{}, error) {
 	}
 	if convs == nil {
 		// Checa se já existe Convênio pelo Nr Prestador
-		fmt.Println("conv.NrPrestador:", conv.NrPrestador)
 		c, err := armazenamento.GetConveniosByNrPrestador(conv.NrPrestador)
 		if err == nil {
 			err = errors.New("Novo Convênio:\"" + conv.NomeConv + "\" já existe com o mesmo Nr Prestador:" + c.NrPrestador + " mas com o Nome: " + c.NomeConv)
@@ -208,7 +207,7 @@ func DeletaConvenioPorId(id primitive.ObjectID) error {
 				fmt.Println(err)
 				return err
 			} else {
-				fmt.Println(result.DeletedCount, "convenio deletado")
+				fmt.Println("convenio deletado:", id)
 				return nil
 			}
 		}

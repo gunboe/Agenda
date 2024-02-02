@@ -28,11 +28,11 @@ func CreateConv(c *gin.Context) {
 	result, err := CriaConvenio(convRequest)
 	if err != nil {
 		reqErro := expandErro.NewBadRequestError("Erros na criação do convênio (Regras de Negócio): " + err.Error())
-		fmt.Println(reqErro)
 		c.JSON(reqErro.Code, reqErro)
 		return
 	}
-	c.JSON(http.StatusOK, result)
+	// Processa e envia resposta (Qdo é para criação é necessário obter o ID do resultado do Mongo)
+	controllers.Resposta(c, result)
 }
 
 // Retornar um objeto Json do Convênio por ID
@@ -41,7 +41,6 @@ func FindConvById(c *gin.Context) {
 	id, err := primitive.ObjectIDFromHex(c.Param("convId"))
 	if err != nil {
 		reqErro := expandErro.NewBadRequestError("Erro na pesquisa:(convId) " + err.Error())
-		fmt.Println(reqErro)
 		c.JSON(reqErro.Code, reqErro)
 		return
 	}
@@ -49,7 +48,6 @@ func FindConvById(c *gin.Context) {
 	conv, err := GetConvenioPorId(id)
 	if err != nil {
 		reqErro := expandErro.NewNotFoundError("Erro na pesquisa: " + err.Error())
-		fmt.Println(reqErro)
 		c.JSON(reqErro.Code, reqErro)
 		return
 	}
@@ -64,7 +62,6 @@ func FindConvenios(c *gin.Context) {
 	jsize := len(pacs.([]models.Convenio))
 	if jsize == 0 {
 		reqErro := expandErro.NewNotFoundError("Erro na pesquisa: convênios não encontrados")
-		fmt.Println(reqErro)
 		c.JSON(reqErro.Code, reqErro)
 		return
 	}
@@ -82,7 +79,6 @@ func UpdateConv(c *gin.Context) {
 	id, err := primitive.ObjectIDFromHex(c.Param("convId"))
 	if err != nil {
 		reqErro := expandErro.NewBadRequestError("Erro na atualização do convênio: (convId) " + err.Error())
-		fmt.Println(reqErro)
 		c.JSON(reqErro.Code, reqErro)
 		return
 	}
@@ -94,22 +90,22 @@ func UpdateConv(c *gin.Context) {
 	err = AtualizaConvPorId(id, convRequest)
 	if err != nil {
 		reqErro = expandErro.NewBadRequestError("Erro na atualização do convênio (Regras de Negócio): " + err.Error())
-		fmt.Println(reqErro)
 		c.JSON(reqErro.Code, reqErro)
 		return
 	}
+	// Processa e envia resposta
+	controllers.Resposta(c, id)
 }
 
-// RC: Atualiza um Convênio por Json
+// (In)Disponibiliza Convênio
 func IndispConv(c *gin.Context) {
 	// var convRequest models.Convenio
 	var reqErro *expandErro.Lasquera
 	var err error
 	// Checa ID
-	convId, err := primitive.ObjectIDFromHex(c.Param("convId"))
+	id, err := primitive.ObjectIDFromHex(c.Param("convId"))
 	if err != nil {
-		reqErro := expandErro.NewBadRequestError("Erro na disponibilização do convênio: (convId) " + err.Error())
-		fmt.Println(reqErro)
+		reqErro := expandErro.NewBadRequestError("Erro: ID convênio: " + err.Error())
 		c.JSON(reqErro.Code, reqErro)
 		return
 	}
@@ -117,39 +113,45 @@ func IndispConv(c *gin.Context) {
 	s := c.Query("indisponivel")
 	b, err := strconv.ParseBool(s)
 	if err != nil {
-		reqErro := expandErro.NewBadRequestError("Erro na disponibilização do convênio: " + err.Error())
-		fmt.Println(reqErro)
+		if s == "" {
+			reqErro = expandErro.NewBadRequestError("Erro: Query: indisponivel não encontrada")
+		} else {
+			reqErro = expandErro.NewBadRequestError("Erro: Query: indisponivel deve ser true ou false, recebido: " + s)
+		}
 		c.JSON(reqErro.Code, reqErro)
 		return
 	}
 	// Tenta realizar a alterção do atributo
-	err = HabiliteConvPorId(convId, b)
+	err = HabiliteConvPorId(id, b)
 	if err != nil {
 		reqErro = expandErro.NewBadRequestError("Erro na disponibilização do convênio (Regras de negócio): " + err.Error())
-		fmt.Println(reqErro)
 		c.JSON(reqErro.Code, reqErro)
 		return
 	}
+	// Processa e envia resposta
+	controllers.Resposta(c, id)
 }
 
-// RC: Deleta um Convênio por ID
+// Deleta um Convênio por ID
 func DeleteConvById(c *gin.Context) {
 	// pac, err := GetPacientePorId(id)
 	var err error
+	var reqErro *expandErro.Lasquera
 	// Checa ID
 	id, err := primitive.ObjectIDFromHex(c.Param("convId"))
 	if err != nil {
-		reqErro := expandErro.NewBadRequestError("Erro na deleção: (convId) " + err.Error())
-		fmt.Println(reqErro)
+		reqErro = expandErro.NewBadRequestError("Erro na deleção: (convId) " + err.Error())
 		c.JSON(reqErro.Code, reqErro)
 		return
+	} else {
+		// Tenta realizar a deleção
+		err = DeletaConvenioPorId(id)
+		if err != nil {
+			reqErro = expandErro.NewNotFoundError("Erro na deleção: " + err.Error())
+			c.JSON(reqErro.Code, reqErro)
+			return
+		}
 	}
-	// Tenta realizar a deleção
-	err = DeletaConvenioPorId(id)
-	if err != nil {
-		reqErro := expandErro.NewNotFoundError("Erro na deleção: " + err.Error())
-		fmt.Println(reqErro)
-		c.JSON(reqErro.Code, reqErro)
-		return
-	}
+	// Processa e envia resposta
+	controllers.Resposta(c, id)
 }

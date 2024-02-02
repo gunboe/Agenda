@@ -156,7 +156,7 @@ func AllowPacienteById(id primitive.ObjectID, b bool) (*mongo.UpdateResult, erro
 	}
 }
 
-// (UPDATE) Insere um Novo PlanoPgto no Paciente por ID. Se não encontrar um Convênio NÃO retorna erro.
+// (UPDATE) Insere um Novo PlanoPgto no Paciente por ID. Se não encontrar um Paciente NÃO retorna erro.
 func InsPlanoPgtoPacienteById(id primitive.ObjectID, plano models.PlanoPgto) (*mongo.UpdateResult, error) {
 	// Definir o Banco e a Coleção de Dados
 	Pacientes = Cliente.Database(config.ConfigInicial.ArmazemDatabase).Collection("Pacientes")

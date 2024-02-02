@@ -22,6 +22,14 @@ type Paciente struct {
 	obs       []string `bson:"obs,omitempty" json:"obs"`
 }
 
+type PacienteResp struct {
+	ID         primitive.ObjectID `json:"id,omitempty"`
+	Criado     bool               `json:"criado,omitempty"`
+	Inserido   bool               `json:"inserido,omitempty"`
+	Atualizado bool               `json:"atualizado,omitempty"`
+	Deletado   bool               `json:"deletado,omitempty"`
+}
+
 // type Pacientes interface {
 // 	Pacientes() []Paciente
 // }
