@@ -72,7 +72,6 @@ func FindPacById(c *gin.Context) {
 	id, err := primitive.ObjectIDFromHex(c.Param("pacId"))
 	if err != nil {
 		reqErro := expandErro.NewBadRequestError("Erro na pesquisa:(pacId) " + err.Error())
-
 		c.JSON(reqErro.Code, reqErro)
 		return
 	}
@@ -81,7 +80,6 @@ func FindPacById(c *gin.Context) {
 	if err != nil {
 		reqErro := expandErro.NewNotFoundError("Erro na pesquisa: " + err.Error())
 		c.JSON(reqErro.Code, reqErro)
-
 		return
 	}
 	fmt.Println("paciente encontrado com id:", id)

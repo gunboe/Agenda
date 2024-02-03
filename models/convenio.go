@@ -17,14 +17,6 @@ type Convenio struct {
 	Indisponivel bool `bson:"indisponivel" json:"indisponivel"`
 }
 
-type ConvenioResp struct {
-	ID         primitive.ObjectID `json:"id,omitempty"`
-	Criado     bool               `json:"criado,omitempty"`
-	Inserido   bool               `json:"inserido,omitempty"`
-	Atualizado bool               `json:"atualizado,omitempty"` // Serve também para o atributo "Indisponivel"
-	Deletado   bool               `json:"deletado,omitempty"`
-}
-
 // Checar convenios
 func ChecarConvenio(conv Convenio) error {
 	// Verificar se os campos do convênio qualquer não estão zerados

@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 // Constantes
@@ -127,11 +128,12 @@ func AtualizaPacPorNome(nome string, novoPac models.Paciente, todos bool) {
 		} else {
 			// Atualiza os dados do Paciente
 			result, err := armazenamento.UpdatePacienteByName(nome, novoPac, todos)
+			r := result.(*mongo.UpdateResult)
 			if err != nil {
 				fmt.Println("Erro:("+Paciente+")", err)
 			} else {
-				fmt.Println("Pacientes encontrados:", result.MatchedCount)
-				fmt.Println("Pacientes atualizados:", result.ModifiedCount)
+				fmt.Println("Pacientes encontrados:", r.MatchedCount)
+				fmt.Println("Pacientes atualizados:", r.ModifiedCount)
 			}
 		}
 	}
@@ -157,9 +159,10 @@ func AtualizaPacPorId(id primitive.ObjectID, novoPac models.Paciente) error {
 	}
 	// Atualiza Paciente, se não encontrar um, Não retorna erro, mas result count=0
 	result, err := armazenamento.UpdatePacienteById(id, novoPac)
+	r := result.(*mongo.UpdateResult)
 	if err == nil {
-		if result.MatchedCount > 0 {
-			if result.ModifiedCount > 0 {
+		if r.MatchedCount > 0 {
+			if r.ModifiedCount > 0 {
 				fmt.Println("Paciente atualizado:", id.Hex())
 			} else {
 				fmt.Println("Paciente encontrado, mas nada foi atualizado")
@@ -175,9 +178,10 @@ func AtualizaPacPorId(id primitive.ObjectID, novoPac models.Paciente) error {
 // essa função o torna Disponível novamente para alteração de dados ou uso em Agendamentos.
 func HabilitePacPorId(id primitive.ObjectID, b bool) error {
 	result, err := armazenamento.AllowPacienteById(id, b)
+	r := result.(*mongo.UpdateResult)
 	if err == nil {
-		if result.MatchedCount > 0 {
-			if result.ModifiedCount > 0 {
+		if r.MatchedCount > 0 {
+			if r.ModifiedCount > 0 {
 				if b {
 					fmt.Println("paciente:", id.Hex(), "Bloqueado")
 				} else {
@@ -201,11 +205,12 @@ func DeletaPacientesPorNome(nome string, todos bool) {
 		fmt.Println("Erro: Nome do Paciente nulo/vazio.")
 	} else {
 		result, err := armazenamento.DeletePacienteByName(nome, todos)
+		r := result.(*mongo.DeleteResult)
 		if err != nil {
 			fmt.Println("Erro:("+Paciente+")", err)
 			fmt.Println("Provavel que o Paciente:\"" + nome + "\" não exista no Armazém.")
 		} else {
-			fmt.Println("Pacientes deletados:", result.DeletedCount)
+			fmt.Println("Pacientes deletados:", r.DeletedCount)
 		}
 	}
 }
@@ -219,13 +224,14 @@ func DeletaPacientePorId(id primitive.ObjectID) error {
 		err = errors.New("id nulo/vazio")
 	} else {
 		result, err := armazenamento.DeletePacienteById(id)
+		r := result.(*mongo.DeleteResult)
 		if err == nil {
-			if result.DeletedCount == 0 {
+			if r.DeletedCount == 0 {
 				err = errors.New("paciente não encontrado")
 				fmt.Println(err)
 				return err
 			} else {
-				fmt.Println(result.DeletedCount, "paciente deletado")
+				fmt.Println(r.DeletedCount, "paciente deletado")
 				return nil
 			}
 		}

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 // Constantes
@@ -69,9 +70,10 @@ func InsPlanoPgtoPaciente(id primitive.ObjectID, plano models.PlanoPgto) (interf
 			} else {
 				// Se tudo certo, Insere no MongoDB o novo PlanoPgto do Paciente
 				result, err := armazenamento.InsPlanoPgtoPacienteById(id, plano)
+				r := result.(*mongo.UpdateResult)
 				if err == nil {
-					if result.MatchedCount > 0 {
-						if result.ModifiedCount > 0 {
+					if r.MatchedCount > 0 {
+						if r.ModifiedCount > 0 {
 							fmt.Println("Plano adicionado com sucesso no Paciente:", pac.Nome)
 							return plano.ID, nil
 						} else {
@@ -99,8 +101,9 @@ func DeletaPlanoPorId(pacid, planoid primitive.ObjectID) error {
 		err = errors.New("id nulo/vazio")
 	} else {
 		result, err := armazenamento.DeletePlanoPorId(pacid, planoid)
+		r := result.(*mongo.UpdateResult)
 		if err == nil {
-			if result.ModifiedCount == 0 {
+			if r.ModifiedCount == 0 {
 				err = errors.New("plano não encontrado")
 				return err
 			} else {

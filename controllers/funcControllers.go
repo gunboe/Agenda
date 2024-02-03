@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"Agenda/models"
 	"Agenda/services/validation"
 	"fmt"
 	"net/http"
@@ -10,6 +9,14 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
+
+type respGeneric struct {
+	ID         primitive.ObjectID `json:"id,omitempty"`
+	Criado     bool               `json:"criado,omitempty"`
+	Inserido   bool               `json:"inserido,omitempty"`
+	Atualizado bool               `json:"atualizado,omitempty"` // Serve também para o atributo "Indisponivel"
+	Deletado   bool               `json:"deletado,omitempty"`
+}
 
 //////////////////////////////////
 // Funções de Controller em Geral
@@ -28,7 +35,7 @@ func AvaliarRequest(c *gin.Context, obj interface{}) error {
 }
 
 func Resposta(c *gin.Context, result interface{}) {
-	var resp models.ConvenioResp
+	var resp respGeneric
 	resp.ID = result.(primitive.ObjectID)
 	path := c.Request.URL.Path
 	switch {

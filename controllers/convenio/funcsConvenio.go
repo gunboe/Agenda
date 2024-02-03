@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 // Constantes
@@ -118,8 +119,9 @@ func AtualizaConvPorNome(nome string, novoConv models.Convenio, todos bool) {
 			if err != nil {
 				fmt.Println("Erro:("+Convenio+")", err)
 			} else {
-				fmt.Println("Convenios encontrados:", result.MatchedCount)
-				fmt.Println("Convenios atualizados:", result.ModifiedCount)
+				r := result.(mongo.UpdateResult)
+				fmt.Println("Convenios encontrados:", r.MatchedCount)
+				fmt.Println("Convenios atualizados:", r.ModifiedCount)
 			}
 		}
 	}
@@ -139,9 +141,10 @@ func AtualizaConvPorId(id primitive.ObjectID, novoConv models.Convenio) error {
 	}
 	// Atualiza os dados do Convênio
 	result, err := armazenamento.UpdateConvenioById(id, novoConv)
+	r := result.(*mongo.UpdateResult)
 	if err == nil {
-		if result.MatchedCount > 0 {
-			if result.ModifiedCount > 0 {
+		if r.MatchedCount > 0 {
+			if r.ModifiedCount > 0 {
 				fmt.Println("convênio atualizado:", id.Hex())
 			} else {
 				fmt.Println("Convênio encontrado, mas nada foi atualizado")
@@ -157,9 +160,10 @@ func AtualizaConvPorId(id primitive.ObjectID, novoConv models.Convenio) error {
 // essa função o torna Disponível novamente para alteração de dados ou uso em PlanosPgtos.
 func HabiliteConvPorId(id primitive.ObjectID, b bool) error {
 	result, err := armazenamento.AllowConveioById(id, b)
+	r := result.(*mongo.UpdateResult)
 	if err == nil {
-		if result.MatchedCount > 0 {
-			if result.ModifiedCount > 0 {
+		if r.MatchedCount > 0 {
+			if r.ModifiedCount > 0 {
 				if b {
 					fmt.Println("convênio:", id.Hex(), "Indisponível")
 				} else {
@@ -183,11 +187,12 @@ func DeletaConveniosPorNome(nome string, todos bool) {
 		fmt.Println("Erro: Nome do Convênio nulo/vazio.")
 	} else {
 		result, err := armazenamento.DeleteConvenioByName(nome, todos)
+		r := result.(*mongo.DeleteResult)
 		if err != nil {
 			fmt.Println("Erro:("+Convenio+")", err)
 			fmt.Println("Provavel que o Convênio:\"" + nome + "\" não exista no Armazém.")
 		} else {
-			fmt.Println("Convenios deletados:", result.DeletedCount)
+			fmt.Println("Convenios deletados:", r.DeletedCount)
 		}
 	}
 }
@@ -201,8 +206,9 @@ func DeletaConvenioPorId(id primitive.ObjectID) error {
 		fmt.Println("iD nulo/vazio")
 	} else {
 		result, err := armazenamento.DeleteConvenioById(id)
+		r := result.(*mongo.DeleteResult)
 		if err == nil {
-			if result.DeletedCount == 0 {
+			if r.DeletedCount == 0 {
 				err = errors.New("convenio não encontrado")
 				fmt.Println(err)
 				return err

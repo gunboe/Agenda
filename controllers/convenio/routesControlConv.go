@@ -51,7 +51,7 @@ func FindConvById(c *gin.Context) {
 		c.JSON(reqErro.Code, reqErro)
 		return
 	}
-	fmt.Println("Paciente encontrado com id:", id)
+	fmt.Println("Convenio encontrado com id:", id)
 	c.JSON(http.StatusOK, conv)
 }
 
