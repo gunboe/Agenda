@@ -17,15 +17,15 @@ import (
 /////////////////////////////////
 
 // Cria Convênio por Json
-func CreateConv(c *gin.Context) {
-	var convRequest models.Convenio
+func (convFunc *ConvenioFunc) CreateConv(c *gin.Context) {
 	var err error
+	var convRequest models.Convenio
 	// Realiza o Marshal dos Campos da requição no Objeto
 	if err = controllers.AvaliarRequest(c, &convRequest); err != nil {
 		return
 	}
 	// Cria o Convenio se não houver erros legados(checagem de campo) ou Erros de Negocio
-	result, err := CriaConvenio(convRequest)
+	result, err := convFunc.CriaConvenio(convRequest)
 	if err != nil {
 		reqErro := expandErro.NewBadRequestError("Erros na criação do convênio (Regras de Negócio): " + err.Error())
 		c.JSON(reqErro.Code, reqErro)
@@ -36,7 +36,7 @@ func CreateConv(c *gin.Context) {
 }
 
 // Retornar um objeto Json do Convênio por ID
-func FindConvById(c *gin.Context) {
+func (convFunc *ConvenioFunc) FindConvById(c *gin.Context) {
 	// Checa o Id recebido
 	id, err := primitive.ObjectIDFromHex(c.Param("convId"))
 	if err != nil {
@@ -45,7 +45,7 @@ func FindConvById(c *gin.Context) {
 		return
 	}
 	// Tenta realizar a busca
-	conv, err := GetConvenioPorId(id)
+	conv, err := convFunc.GetConvenioPorId(id)
 	if err != nil {
 		reqErro := expandErro.NewNotFoundError("Erro na pesquisa: " + err.Error())
 		c.JSON(reqErro.Code, reqErro)
@@ -56,10 +56,10 @@ func FindConvById(c *gin.Context) {
 }
 
 // Retornar Todos ("*") objetos Json do Convênio ou por Nome
-func FindConvenios(c *gin.Context) {
+func (convFunc *ConvenioFunc) FindConvenios(c *gin.Context) {
 	// Tenta realizar a busca
-	pacs := ListaConvenio(c.Param("nome"), "bson")
-	jsize := len(pacs.([]models.Convenio))
+	convs := convFunc.ListaConvenio(c.Param("nome"), "bson")
+	jsize := len(convs.([]models.Convenio))
 	if jsize == 0 {
 		reqErro := expandErro.NewNotFoundError("Erro na pesquisa: convênios não encontrados")
 		c.JSON(reqErro.Code, reqErro)
@@ -67,11 +67,11 @@ func FindConvenios(c *gin.Context) {
 	}
 	// Converte o Tipo Interface no Tipo dos dados reais e calucula o tamanho do array
 	fmt.Println("Convênio(s) encontrado(s):", jsize)
-	c.JSON(http.StatusOK, pacs)
+	c.JSON(http.StatusOK, convs)
 }
 
 // Atualiza um Convênio por Json
-func UpdateConv(c *gin.Context) {
+func (convFunc *ConvenioFunc) UpdateConv(c *gin.Context) {
 	var convRequest models.Convenio
 	var reqErro *expandErro.Lasquera
 	var err error
@@ -87,7 +87,7 @@ func UpdateConv(c *gin.Context) {
 		return
 	}
 	// Atualiza o Convênio
-	err = AtualizaConvPorId(id, convRequest)
+	err = convFunc.AtualizaConvPorId(id, convRequest)
 	if err != nil {
 		reqErro = expandErro.NewBadRequestError("Erro na atualização do convênio (Regras de Negócio): " + err.Error())
 		c.JSON(reqErro.Code, reqErro)
@@ -98,7 +98,8 @@ func UpdateConv(c *gin.Context) {
 }
 
 // (In)Disponibiliza Convênio
-func IndispConv(c *gin.Context) {
+func (convFunc *ConvenioFunc) IndispConv(c *gin.Context) {
+
 	// var convRequest models.Convenio
 	var reqErro *expandErro.Lasquera
 	var err error
@@ -122,7 +123,7 @@ func IndispConv(c *gin.Context) {
 		return
 	}
 	// Tenta realizar a alterção do atributo
-	err = HabiliteConvPorId(id, b)
+	err = convFunc.HabiliteConvPorId(id, b)
 	if err != nil {
 		reqErro = expandErro.NewBadRequestError("Erro na disponibilização do convênio (Regras de negócio): " + err.Error())
 		c.JSON(reqErro.Code, reqErro)
@@ -133,7 +134,8 @@ func IndispConv(c *gin.Context) {
 }
 
 // Deleta um Convênio por ID
-func DeleteConvById(c *gin.Context) {
+func (convFunc *ConvenioFunc) DeleteConvById(c *gin.Context) {
+
 	// pac, err := GetPacientePorId(id)
 	var err error
 	var reqErro *expandErro.Lasquera
@@ -145,7 +147,7 @@ func DeleteConvById(c *gin.Context) {
 		return
 	} else {
 		// Tenta realizar a deleção
-		err = DeletaConvenioPorId(id)
+		err = convFunc.DeletaConvenioPorId(id)
 		if err != nil {
 			reqErro = expandErro.NewNotFoundError("Erro na deleção: " + err.Error())
 			c.JSON(reqErro.Code, reqErro)

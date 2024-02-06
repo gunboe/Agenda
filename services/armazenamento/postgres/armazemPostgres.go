@@ -1,4 +1,4 @@
-package armazenamento
+package pdb
 
 import "github.com/jmoiron/sqlx"
 

@@ -18,8 +18,8 @@ import (
 // Routes Control para Pacientes
 /////////////////////////////////
 
-// RC: Cria Paciente por Json
-func CreatePac(c *gin.Context) {
+// Cria Paciente por Json
+func (pacFunc *PacienteFunc) CreatePac(c *gin.Context) {
 	// Avalia os atributos do Request de Paciente
 	var pacRequest models.Paciente
 	var err error
@@ -27,7 +27,7 @@ func CreatePac(c *gin.Context) {
 		return
 	}
 	// Cria o Paciente se não houver erros legados(checagem de campo) ou Erros de Negocio
-	result, err := CriaPaciente(pacRequest)
+	result, err := pacFunc.CriaPaciente(pacRequest)
 	if err != nil {
 		reqErro := expandErro.NewBadRequestError("Erros na regra de negócio: " + err.Error())
 
@@ -39,7 +39,7 @@ func CreatePac(c *gin.Context) {
 }
 
 // Insere Plano de Pagamento em um Paciente passando um ID e o PlanoPgto
-func InserePlanoPac(c *gin.Context) {
+func (pacFunc *PacienteFunc) InserePlanoPac(c *gin.Context) {
 	var planoRequest models.PlanoPgto
 	var err error
 	// Realiza o Marshal dos Campos da requição no Objeto
@@ -55,7 +55,7 @@ func InserePlanoPac(c *gin.Context) {
 		return
 	}
 	// Checa Erros de Negocio
-	result, err := InsPlanoPgtoPaciente(id, planoRequest)
+	result, err := pacFunc.InsPlanoPgtoPaciente(id, planoRequest)
 	if err != nil {
 		reqErro := expandErro.NewBadRequestError("Erros na regra de negócio: " + err.Error())
 
@@ -67,7 +67,7 @@ func InserePlanoPac(c *gin.Context) {
 }
 
 // RC: Retornar um objeto Json do Paciente por ID
-func FindPacById(c *gin.Context) {
+func (pacFunc *PacienteFunc) FindPacById(c *gin.Context) {
 	// Checa o Id recebido
 	id, err := primitive.ObjectIDFromHex(c.Param("pacId"))
 	if err != nil {
@@ -76,7 +76,7 @@ func FindPacById(c *gin.Context) {
 		return
 	}
 	// Tenta realizar a busca
-	pac, err := GetPacientePorId(id)
+	pac, err := pacFunc.GetPacientePorId(id)
 	if err != nil {
 		reqErro := expandErro.NewNotFoundError("Erro na pesquisa: " + err.Error())
 		c.JSON(reqErro.Code, reqErro)
@@ -87,10 +87,10 @@ func FindPacById(c *gin.Context) {
 }
 
 // RC: Retornar TODOS ("*") objetos Json do Paciente ou por Nome
-func FindPacientes(c *gin.Context) {
+func (pacFunc *PacienteFunc) FindPacientes(c *gin.Context) {
 	// Tenta realizar a busca
 	// nome := c.Param("pac")
-	pacs := ListaPaciente(c.Param("nome"), "bson")
+	pacs := pacFunc.ListaPaciente(c.Param("nome"), "bson")
 	jsize := len(pacs.([]models.Paciente))
 	if jsize == 0 {
 		reqErro := expandErro.NewNotFoundError("Erro na pesquisa: pacientes não encontrados")
@@ -104,7 +104,7 @@ func FindPacientes(c *gin.Context) {
 }
 
 // RC: Retornar um objeto Json do Paciente por CPF
-func FindPacByCPF(c *gin.Context) {
+func (pacFunc *PacienteFunc) FindPacByCPF(c *gin.Context) {
 	var err error
 	cpf := c.Param("pacCPF")
 	// Checa o CPF recebido
@@ -116,7 +116,7 @@ func FindPacByCPF(c *gin.Context) {
 		return
 	}
 	// Tenta realizar a busca
-	pac, err := GetPacientePorCPF(cpf)
+	pac, err := pacFunc.GetPacientePorCPF(cpf)
 	if err != nil {
 		reqErro := expandErro.NewNotFoundError("Erro na pesquisa: " + err.Error())
 
@@ -128,7 +128,7 @@ func FindPacByCPF(c *gin.Context) {
 }
 
 // RC: Atualiza um Paciente por Json
-func UpdatePac(c *gin.Context) {
+func (pacFunc *PacienteFunc) UpdatePac(c *gin.Context) {
 	var pacRequest models.Paciente
 	var reqErro *expandErro.Lasquera
 	var err error
@@ -145,7 +145,7 @@ func UpdatePac(c *gin.Context) {
 		return
 	}
 	// Atualiza o Objeto
-	err = AtualizaPacPorId(id, pacRequest)
+	err = pacFunc.AtualizaPacPorId(id, pacRequest)
 	if err != nil {
 		reqErro = expandErro.NewBadRequestError("Erro na atualização do Paciente (regras de negócio): " + err.Error())
 
@@ -157,7 +157,7 @@ func UpdatePac(c *gin.Context) {
 }
 
 // RC: (Des)Bloqueia um Paciente por Query
-func BloqPac(c *gin.Context) {
+func (pacFunc *PacienteFunc) BloqPac(c *gin.Context) {
 	var reqErro *expandErro.Lasquera
 	var err error
 	// Checa ID
@@ -181,7 +181,7 @@ func BloqPac(c *gin.Context) {
 		return
 	}
 	// Tenta realizar a alterção do atributo
-	err = HabilitePacPorId(id, b)
+	err = pacFunc.HabilitePacPorId(id, b)
 	if err != nil {
 		reqErro = expandErro.NewBadRequestError("Erro no (Des)Bloqueio do Paciente: (regras de negócio): " + err.Error())
 		c.JSON(reqErro.Code, reqErro)
@@ -192,7 +192,7 @@ func BloqPac(c *gin.Context) {
 }
 
 // RC: Deleta um Paciente por ID
-func DeletePacById(c *gin.Context) {
+func (pacFunc *PacienteFunc) DeletePacById(c *gin.Context) {
 	var err error
 	// Checa ID
 	id, err := primitive.ObjectIDFromHex(c.Param("pacId"))
@@ -203,7 +203,7 @@ func DeletePacById(c *gin.Context) {
 		return
 	}
 	// Tenta realizar a deleção
-	err = DeletaPacientePorId(id)
+	err = pacFunc.DeletaPacientePorId(id)
 	if err != nil {
 		reqErro := expandErro.NewNotFoundError("Erro na deleção: " + err.Error())
 
@@ -215,7 +215,7 @@ func DeletePacById(c *gin.Context) {
 }
 
 // RC: Deleta Plano de Pagamento por ID (PlanoPgto.ID)
-func DelPlanoPac(c *gin.Context) {
+func (pacFunc *PacienteFunc) DelPlanoPac(c *gin.Context) {
 	var err error
 	// Checa ID do Paciente
 	pacid, err := primitive.ObjectIDFromHex(c.Param("pacId"))
@@ -234,7 +234,7 @@ func DelPlanoPac(c *gin.Context) {
 		return
 	}
 	// Tenta realizar a deleção
-	err = DeletaPlanoPorId(pacid, id)
+	err = pacFunc.DeletaPlanoPorId(pacid, id)
 	if err != nil {
 		reqErro := expandErro.NewNotFoundError("Erro na deleção: " + err.Error())
 

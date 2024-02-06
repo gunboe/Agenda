@@ -1,45 +1,65 @@
 package main
 
 import (
+	"Agenda/app"
 	convControllers "Agenda/controllers/convenio"
 	pacControllers "Agenda/controllers/paciente"
-	"Agenda/models"
+	"Agenda/repository"
+	mdb "Agenda/services/armazenamento/mongodb"
 	"Agenda/services/config"
-	"Agenda/services/routes"
 	"fmt"
+	"os"
 	"strings"
-	"time"
-
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func main() {
-	//
-	// Inicio da Rotina de verdade
-	//
-	// Carregar as configurações e verifica a conexão com o banco
-	inicializaAmbiente()
+	var err error
 
-	// testes()
-
-	// // Iniciando o Roteador, após iniciado fica em Loop!
-	routes.InicializaRouter()
-}
-
-////////////////////////////
-// Função de Inicialização
-////////////////////////////
-
-// Inicializa o ambiente
-func inicializaAmbiente() {
 	// Carrega as configurações
-	var conf config.Config
-	conf = config.ConfigInicial
-	// Conecta ao Banco
+	conf := config.ConfigInicial
+
+	// Carrega as configurações
+	fmt.Print("Carregando as Configurações do Armazenamento...")
+	fmt.Println(conf.ArmazemDados)
+
+	// Inicialização prévia do Banco
+	var convFunc *convControllers.ConvenioFunc
+	var pacienteFunc *pacControllers.PacienteFunc
+
+	// Implementa o Banco de Dados definido na configuração
+	switch conf.ArmazemDados {
+	case "MongoDB":
+		db := &mdb.MongoDB{}
+		err := db.TestaBanco(conf)
+		if err != nil {
+			fmt.Println("Erro: Teste inicial de Banco de Dados MongoDB")
+			fmt.Println("verifique o Mongo e as configurações de acesso.")
+			os.Exit(1)
+		}
+		// Iniicializa os serviços/Funções de Banco de Dados para o Objetos a serem armazenados
+		convFunc = &convControllers.ConvenioFunc{ConvRepo: repository.ConvRepo{DB: db}}
+		pacienteFunc = &pacControllers.PacienteFunc{
+			PacRepo:  repository.PacRepo{DB: db},
+			ConvRepo: repository.ConvRepo{DB: db}}
+	case "Postgres":
+		fmt.Println("Banco Postgres ainda não implementado. Use o MongoDB! Saindo...")
+		os.Exit(1)
+	default:
+		fmt.Println("Erro: Escolha uma opção de Banco de Dados na Configuração (config.ini)")
+		os.Exit(1)
+	}
+
+	// Reconecta ao Banco
 	fmt.Println("Utilizando o DataBase:", conf.ArmazemDatabase)
 	// Testa o Banco relacionando todos os Convênnios e Pacientes
-	todosConvs := convControllers.GetConveniosPorNome("*")
-	todosPacientes := pacControllers.GetPacientesPorNome("*")
+	err = convFunc.ConvRepo.ConectaDB(config.ConfigInicial)
+	if err != nil {
+		fmt.Println("Erro: Banco de Dados não conectou")
+		os.Exit(1)
+	}
+	// Obtem todos os Convênios
+	todosConvs := convFunc.GetConveniosPorNome("*")
+	// todosPacientes := pacControllers.GetPacientesPorNome("*")   // <------
 	// Listagem de Convenios
 	var listaConvs string
 	for _, v := range todosConvs {
@@ -47,6 +67,9 @@ func inicializaAmbiente() {
 	}
 	listaConvs = strings.TrimSpace(listaConvs)
 	fmt.Println("Lista de Todos os Convenios:", listaConvs)
+
+	// Obtem Todos Pacientes
+	todosPacientes := pacienteFunc.GetPacientesPorNome("*")
 	// Listagem de Pacientes
 	var listaPacs string
 	for _, p := range todosPacientes {
@@ -55,8 +78,24 @@ func inicializaAmbiente() {
 	listaPacs = strings.TrimSpace(listaPacs)
 	fmt.Println("Lista de Todos os Pacientes:", listaPacs)
 
+	// Cria e chama a inicializa da Aplicação de API
+	application := &app.Application{
+		ConvFunc:     convFunc,
+		PacienteFunc: pacienteFunc,
+		// ProductService: *productService,
+		// OrderService:   *orderService,
+	}
+	application.Run()
+
+	// Fecha as Conexões do Banco
+	err = convFunc.ConvRepo.DB.Close()
+	if err != nil {
+		fmt.Println("Erro: Banco de Dados não fechou!")
+		os.Exit(1)
+	}
+
 	// Avisa que está pronto
-	fmt.Println("Ambiente pronto para uso!\n")
+	fmt.Println("Ambiente provavelmente encerrado!\n")
 }
 
 func testes() {
@@ -188,11 +227,11 @@ func testes() {
 	// novoConv = models.Convenio{ID: primitive.NewObjectID(), NomeConv: nomeConv, Endereco: endConv, DataContratoConv: dataConv, Indisponivel: false}
 	// controllers.CriaConvenio(novoConv)
 
-	nomeConv := "Sul America"
-	endConv := "Rua das Nações,163"
-	dataConv, _ := time.Parse("02/01/2006", "05/05/2055") // Data deve conter zero!!
-	novoConv := models.Convenio{ID: primitive.NewObjectID(), NomeConv: nomeConv, Endereco: endConv, DataContratoConv: dataConv}
-	convControllers.CriaConvenio(novoConv)
+	// nomeConv := "Sul America"
+	// endConv := "Rua das Nações,163"
+	// dataConv, _ := time.Parse("02/01/2006", "05/05/2055") // Data deve conter zero!!
+	// novoConv := models.Convenio{ID: primitive.NewObjectID(), NomeConv: nomeConv, Endereco: endConv, DataContratoConv: dataConv}
+	// convControllers.CriaConvenio(novoConv)
 
 	// Listar Convenios
 	// controllers.ListaConvenio("*")
