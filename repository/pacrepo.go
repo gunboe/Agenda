@@ -3,7 +3,6 @@ package repository
 import (
 	"Agenda/models"
 	db "Agenda/services/armazenamento"
-	"Agenda/services/config"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -12,8 +11,8 @@ type PacRepo struct {
 	DB db.PacDatabase
 }
 
-func (r *PacRepo) ConectaDB(conf config.Config) error {
-	return r.DB.Connect(conf)
+func (r *PacRepo) ConectaDB() error {
+	return r.DB.Connect()
 }
 func (r *PacRepo) fechaDB() error {
 	return r.DB.Close()

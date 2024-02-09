@@ -13,31 +13,37 @@ import (
 )
 
 func main() {
+	// Iniciando Agenda
 	var err error
+	fmt.Println("-- Iniciando Agenda --")
 
 	// Carrega as configurações
-	conf := config.ConfigInicial
-
-	// Carrega as configurações
+	var conf config.Config
+	err = conf.CarregaConfig("config.ini")
+	if err != nil {
+		fmt.Println("Erro de Configuração: ", err)
+		os.Exit(1)
+	}
 	fmt.Print("Carregando as Configurações do Armazenamento...")
 	fmt.Println(conf.ArmazemDados)
 
-	// Inicialização prévia do Banco
+	// Inicialização das Funções de Conexão do Banco de Dados
 	var convFunc *convControllers.ConvenioFunc
 	var pacienteFunc *pacControllers.PacienteFunc
 
 	// Implementa o Banco de Dados definido na configuração
 	switch conf.ArmazemDados {
 	case "MongoDB":
-		db := &mdb.MongoDB{}
-		err := db.TestaBanco(conf)
+		db := &mdb.MongoDB{Configuracao: conf}
+		err := db.TestaBanco()
 		if err != nil {
 			fmt.Println("Erro: Teste inicial de Banco de Dados MongoDB")
 			fmt.Println("verifique o Mongo e as configurações de acesso.")
 			os.Exit(1)
 		}
 		// Iniicializa os serviços/Funções de Banco de Dados para o Objetos a serem armazenados
-		convFunc = &convControllers.ConvenioFunc{ConvRepo: repository.ConvRepo{DB: db}}
+		convFunc = &convControllers.ConvenioFunc{
+			ConvRepo: repository.ConvRepo{DB: db}}
 		pacienteFunc = &pacControllers.PacienteFunc{
 			PacRepo:  repository.PacRepo{DB: db},
 			ConvRepo: repository.ConvRepo{DB: db}}
@@ -49,17 +55,59 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Reconecta ao Banco
-	fmt.Println("Utilizando o DataBase:", conf.ArmazemDatabase)
-	// Testa o Banco relacionando todos os Convênnios e Pacientes
-	err = convFunc.ConvRepo.ConectaDB(config.ConfigInicial)
-	if err != nil {
-		fmt.Println("Erro: Banco de Dados não conectou")
+	// Chama a apresentação Inicial
+	// apresentacaoIni()
+
+	// Monta uma conexão com o Banco
+	if err = convFunc.ConvRepo.DB.Connect(); err != nil {
+		// Lidar com o erro de conexão
+		fmt.Println("Erro de Conexão com o Banco:", err)
 		os.Exit(1)
 	}
+	defer convFunc.ConvRepo.DB.Close()
+
+	// Instancia a Aplicação passando as Conexões de Banco de Dados
+	application := &app.Application{
+		// Conexões de Banco de Dados
+		ConvFunc:     convFunc,
+		PacienteFunc: pacienteFunc,
+		// Configurações
+		Configuracao: conf,
+	}
+	// Executa a Aplicação passando as configurações
+	application.Run()
+
+	// Fecha as Conexões do Banco
+	err = convFunc.ConvRepo.DB.Close()
+	if err != nil {
+		fmt.Println("Erro: Banco de Dados não fechou!")
+		os.Exit(1)
+	}
+
+	// Avisa que está pronto
+	fmt.Println("Ambiente provavelmente encerrado!\n")
+}
+
+// Execução de duas consultas para apresentção incial
+func apresentacaoIni() {
+	// var err error
+	var conf config.Config
+	conf.CarregaConfig("config.ini")
+	var convFunc *convControllers.ConvenioFunc
+	var pacienteFunc *pacControllers.PacienteFunc
+	db := &mdb.MongoDB{Configuracao: conf}
+	db.Connect()
+	convFunc = &convControllers.ConvenioFunc{
+		ConvRepo: repository.ConvRepo{DB: db}}
+	pacienteFunc = &pacControllers.PacienteFunc{
+		PacRepo:  repository.PacRepo{DB: db},
+		ConvRepo: repository.ConvRepo{DB: db}}
+
+	// Reconecta ao Banco
+	fmt.Println("Utilizando o DataBase:", conf.ArmazemDatabase)
+
 	// Obtem todos os Convênios
 	todosConvs := convFunc.GetConveniosPorNome("*")
-	// todosPacientes := pacControllers.GetPacientesPorNome("*")   // <------
 	// Listagem de Convenios
 	var listaConvs string
 	for _, v := range todosConvs {
@@ -77,25 +125,6 @@ func main() {
 	}
 	listaPacs = strings.TrimSpace(listaPacs)
 	fmt.Println("Lista de Todos os Pacientes:", listaPacs)
-
-	// Cria e chama a inicializa da Aplicação de API
-	application := &app.Application{
-		ConvFunc:     convFunc,
-		PacienteFunc: pacienteFunc,
-		// ProductService: *productService,
-		// OrderService:   *orderService,
-	}
-	application.Run()
-
-	// Fecha as Conexões do Banco
-	err = convFunc.ConvRepo.DB.Close()
-	if err != nil {
-		fmt.Println("Erro: Banco de Dados não fechou!")
-		os.Exit(1)
-	}
-
-	// Avisa que está pronto
-	fmt.Println("Ambiente provavelmente encerrado!\n")
 }
 
 func testes() {

@@ -11,10 +11,8 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-// Inicialização do Objeto de Validação
-
 // Registro das TAGs "validate" do Struct e das funções respectivas
-func init() {
+func RegistraValidacaoTags() {
 	// Inicialização das Validações Binding do Gin-gonic
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
 		v.RegisterValidation("valnrcelular", ValidaNrCelular)

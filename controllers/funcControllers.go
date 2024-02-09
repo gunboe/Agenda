@@ -22,8 +22,12 @@ type respGeneric struct {
 // Funções de Controller em Geral
 //////////////////////////////////
 
+// Função de Validação das Tags
 func AvaliarRequest(c *gin.Context, obj interface{}) error {
 	var err error
+	// Carrega as verificações das Tags
+	validation.RegistraValidacaoTags()
+	// Carrega (Bind) os dados do Request
 	err = c.ShouldBindJSON(obj)
 	if err != nil {
 		// Existindo um erro, ele será enviado para validação do Paciente
@@ -34,6 +38,7 @@ func AvaliarRequest(c *gin.Context, obj interface{}) error {
 	return err
 }
 
+// Função de preparação da Resposta (View)
 func Resposta(c *gin.Context, result interface{}) {
 	var resp respGeneric
 	resp.ID = result.(primitive.ObjectID)

@@ -16,14 +16,15 @@ var ctx = context.TODO()
 // Implementação da interface Database para MongoDB
 type MongoDB struct {
 	// campos específicos do MongoDB, se necessário
-	Client *mongo.Client
+	Client       *mongo.Client
+	Configuracao config.Config
 }
 
 // Conectar ao MongoDB
-func (m *MongoDB) Connect(conf config.Config) error {
+func (m *MongoDB) Connect() error {
 	// lógica de conexão com MongoDB
 	var err error
-	url := "mongodb://" + conf.ArmazemHost + ":" + strconv.Itoa(conf.ArmazemPort) + "/"
+	url := "mongodb://" + m.Configuracao.ArmazemHost + ":" + strconv.Itoa(m.Configuracao.ArmazemPort) + "/"
 	clientOptions := options.Client().ApplyURI(url)
 	m.Client, err = mongo.Connect(ctx, clientOptions)
 	if err != nil {
@@ -45,10 +46,10 @@ func (m *MongoDB) Close() error {
 }
 
 // Inicialização do serviço de armazenamento do MongoDB
-func (m *MongoDB) TestaBanco(conf config.Config) error {
+func (m *MongoDB) TestaBanco() error {
 	// Conectar e testar o acesso ao Armazem de Dados
 	fmt.Print("Conectando ao MongoDB...")
-	err := m.Connect(conf)
+	err := m.Connect()
 	if err != nil {
 		return err
 	} else {

@@ -4,20 +4,26 @@ import (
 	convControllers "Agenda/controllers/convenio"
 	pacControllers "Agenda/controllers/paciente"
 	"Agenda/services/config"
+	"Agenda/services/logger"
 	"fmt"
 	"log"
 
 	"github.com/gin-gonic/gin"
 )
 
+// Atributos da Aplicação
 type Application struct {
 	ConvFunc     *convControllers.ConvenioFunc
 	PacienteFunc *pacControllers.PacienteFunc
+	Configuracao config.Config
 }
 
 func (app *Application) Run() {
 	fmt.Println("-- Executando a Aplicação --")
-	// Inicializando API - daqui não roda mais nada
+	// Inicializa o Logger
+	logger.InicializaLogger(app.Configuracao)
+	logger.Info("Logger inciado")
+	// Incializa o Router
 	InicializaRouter(app)
 }
 
@@ -46,8 +52,9 @@ func InicializaRouter(app *Application) {
 	// Iniciando o Roteador
 	router := gin.Default()
 	rv1 := router.Group("/api/v1")
+	// Inicializando API - daqui não roda mais nada
 	InitRoutes(rv1, app)
-	err := router.Run(":" + fmt.Sprint(config.ConfigInicial.ApiServerPort))
+	err := router.Run(":" + fmt.Sprint(app.Configuracao.ApiServerPort))
 	if err != nil {
 		log.Fatal("Roteador falhou:", err)
 	}

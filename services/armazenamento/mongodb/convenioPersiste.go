@@ -2,7 +2,6 @@ package mdg
 
 import (
 	"Agenda/models"
-	"Agenda/services/config"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -12,19 +11,19 @@ import (
 var colecaoConvenio = "Convenios"
 
 // Criar Convênios para serem utilizados nos Planos de Pagamentos.
-func (mdb *MongoDB) CreateConvenio(cv models.Convenio) (interface{}, error) {
+func (m *MongoDB) CreateConvenio(cv models.Convenio) (interface{}, error) {
 	// Antes de qq coisa, verificar os dados do Convenio.
 	err := models.ChecarConvenio(cv)
 	if err != nil {
 		return nil, err
 	}
 	// Definir o Banco e a Coleção de Dados
-	mdb.Connect(config.ConfigInicial)
+	m.Connect()
 	if err != nil {
 		return nil, err
 	}
-	Convenios := mdb.Client.Database(config.ConfigInicial.ArmazemDatabase).Collection(colecaoConvenio)
-	// Convenios = Cliente.Database(config.ConfigInicial.ArmazemDatabase).Collection("Convenios")
+	Convenios := m.Client.Database(m.Configuracao.ArmazemDatabase).Collection(colecaoConvenio)
+	// Convenios = Cliente.Database(m.Configuracao.ArmazemDatabase).Collection("Convenios")
 	// Inserir os Dados no contexto atual
 	result, err := Convenios.InsertOne(ctx, cv)
 	if err != nil {
@@ -36,9 +35,9 @@ func (mdb *MongoDB) CreateConvenio(cv models.Convenio) (interface{}, error) {
 
 // (READ) Ler/Retorna Lista de Convênios buscando por Nome independete de Caixa/Baixa.
 // A String "*" indica todos os Convênios.
-func (mdb *MongoDB) GetConveniosByName(nome string) ([]models.Convenio, error) {
+func (m *MongoDB) GetConveniosByName(nome string) ([]models.Convenio, error) {
 	// Definir o Banco e a Coleção de Dados
-	Convenios := mdb.Client.Database(config.ConfigInicial.ArmazemDatabase).Collection(colecaoConvenio)
+	Convenios := m.Client.Database(m.Configuracao.ArmazemDatabase).Collection(colecaoConvenio)
 	// Cria os filtros adequados de pesquisa no MongoDB
 	var filter bson.M
 	if nome == "*" {
@@ -61,9 +60,9 @@ func (mdb *MongoDB) GetConveniosByName(nome string) ([]models.Convenio, error) {
 }
 
 // (READ) Ler/Retorna Convênios por NrPrestador. Se não encontrar retorna um Erro e um Convenio com atributos zerados.
-func (mdb *MongoDB) GetConveniosByNrPrestador(nr string) (models.Convenio, error) {
+func (m *MongoDB) GetConveniosByNrPrestador(nr string) (models.Convenio, error) {
 	// Definir o Banco e a Coleção de Dados
-	Convenios := mdb.Client.Database(config.ConfigInicial.ArmazemDatabase).Collection(colecaoConvenio)
+	Convenios := m.Client.Database(m.Configuracao.ArmazemDatabase).Collection(colecaoConvenio)
 	// Cria os filtros adequados de pesquisa no MongoDB
 	filter := bson.M{"nrprestador": nr}
 	// Cria um Convênio
@@ -77,9 +76,9 @@ func (mdb *MongoDB) GetConveniosByNrPrestador(nr string) (models.Convenio, error
 }
 
 // Ler/Retorna Convênios por ID. Se não encontrar retorna um Erro e um Convenio com atributos zerados.
-func (mdb *MongoDB) GetConvenioById(id primitive.ObjectID) (models.Convenio, error) {
+func (m *MongoDB) GetConvenioById(id primitive.ObjectID) (models.Convenio, error) {
 	// Definir o Banco e a Coleção de Dados
-	Convenios := mdb.Client.Database(config.ConfigInicial.ArmazemDatabase).Collection(colecaoConvenio)
+	Convenios := m.Client.Database(m.Configuracao.ArmazemDatabase).Collection(colecaoConvenio)
 	// Cria os filtros adequados de pesquisa no MongoDB
 	filter := bson.M{"_id": id}
 	// Cria um Convênio
@@ -94,9 +93,9 @@ func (mdb *MongoDB) GetConvenioById(id primitive.ObjectID) (models.Convenio, err
 
 // Atualiza um ou mais Convenios pelo Nome do Convênio. Se não encontrar um Convênio NÃO retorna erro.
 // Ao passar a String "*" todos os registros filtrados serão alterados.
-func (mdb *MongoDB) UpdateConvenioByName(nome string, novoConv models.Convenio, todos bool) (interface{}, error) {
+func (m *MongoDB) UpdateConvenioByName(nome string, novoConv models.Convenio, todos bool) (interface{}, error) {
 	// Definir o Banco e a Coleção de Dados
-	Convenios := mdb.Client.Database(config.ConfigInicial.ArmazemDatabase).Collection(colecaoConvenio)
+	Convenios := m.Client.Database(m.Configuracao.ArmazemDatabase).Collection(colecaoConvenio)
 	// Cria os filtros adequados de pesquisa no MongoDB
 	var filter bson.M
 	if nome == "*" {
@@ -121,9 +120,9 @@ func (mdb *MongoDB) UpdateConvenioByName(nome string, novoConv models.Convenio, 
 }
 
 // Atualiza os Compos de um Convenios pelo ID do Convênio. Se não encontrar um Convênio NÃO retorna erro.
-func (mdb *MongoDB) UpdateConvenioById(id primitive.ObjectID, novoConv models.Convenio) (interface{}, error) {
+func (m *MongoDB) UpdateConvenioById(id primitive.ObjectID, novoConv models.Convenio) (interface{}, error) {
 	// Definir o Banco e a Coleção de Dados
-	Convenios := mdb.Client.Database(config.ConfigInicial.ArmazemDatabase).Collection(colecaoConvenio)
+	Convenios := m.Client.Database(m.Configuracao.ArmazemDatabase).Collection(colecaoConvenio)
 	// Cria os filtros adequados de pesquisa no MongoDB
 	update := bson.M{"$set": novoConv}
 	var result *mongo.UpdateResult
@@ -138,9 +137,9 @@ func (mdb *MongoDB) UpdateConvenioById(id primitive.ObjectID, novoConv models.Co
 
 // Disponibilizar um Convênio por ID. Quando um Convênio está marcado como Indisponivel,
 // ele não pode ser alterado nem utilizado em PlanosPgto. Se não encontrar um Convênio NÃO retorna erro.
-func (mdb *MongoDB) AllowConveioById(id primitive.ObjectID, b bool) (interface{}, error) {
+func (m *MongoDB) AllowConveioById(id primitive.ObjectID, b bool) (interface{}, error) {
 	// Definir o Banco e a Coleção de Dados
-	Convenios := mdb.Client.Database(config.ConfigInicial.ArmazemDatabase).Collection(colecaoConvenio)
+	Convenios := m.Client.Database(m.Configuracao.ArmazemDatabase).Collection(colecaoConvenio)
 	// Define o valor a ser atualizado
 	update := bson.M{"$set": bson.M{"indisponivel": b}}
 	var result *mongo.UpdateResult
@@ -155,9 +154,9 @@ func (mdb *MongoDB) AllowConveioById(id primitive.ObjectID, b bool) (interface{}
 
 // Deleta os Convênios de acordo com o "Nome" passado como parâmetro.
 // Se "todos" = "true", todos os Docs do filtro serão deletados.
-func (mdb *MongoDB) DeleteConvenioByName(nome string, todos bool) (interface{}, error) {
+func (m *MongoDB) DeleteConvenioByName(nome string, todos bool) (interface{}, error) {
 	// Definir o Banco e a Coleção de Dados
-	Convenios := mdb.Client.Database(config.ConfigInicial.ArmazemDatabase).Collection(colecaoConvenio)
+	Convenios := m.Client.Database(m.Configuracao.ArmazemDatabase).Collection(colecaoConvenio)
 	// Inserir os Dados no contexto atual
 	var result *mongo.DeleteResult
 	// Cria os filtros adequados de pesquisa no MongoDB
@@ -182,9 +181,9 @@ func (mdb *MongoDB) DeleteConvenioByName(nome string, todos bool) (interface{}, 
 }
 
 // Deleta os Convênios de acordo com o "Nome" passado como parâmetro.
-func (mdb *MongoDB) DeleteConvenioById(id primitive.ObjectID) (interface{}, error) {
+func (m *MongoDB) DeleteConvenioById(id primitive.ObjectID) (interface{}, error) {
 	// Definir o Banco e a Coleção de Dados
-	Convenios := mdb.Client.Database(config.ConfigInicial.ArmazemDatabase).Collection(colecaoConvenio)
+	Convenios := m.Client.Database(m.Configuracao.ArmazemDatabase).Collection(colecaoConvenio)
 	// Inserir os Dados no contexto atual
 	var result *mongo.DeleteResult
 	// Cria os filtros adequados de pesquisa no MongoDB

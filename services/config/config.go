@@ -3,7 +3,6 @@ package config
 import (
 	"errors"
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -32,64 +31,89 @@ type Config struct {
 	ArmazemChave     string
 	ArmazemExtra     string
 	ApiServerPort    int
+	LogOutput        string
+	LogLevel         string
 }
 
-var ConfigInicial Config
-
-func init() {
-	ConfigInicial.CarregaConfig("config.ini")
-}
-
-func (c *Config) SetSecret(s string) error {
-	if s == "" {
-		return errors.New("[SetSecret] Segredo Nulo ou vazio!")
-	} else {
-		c.admSecret = s
-		return nil
-	}
-}
-
-func (c *Config) GetSecret() (string, error) {
-	if c.admSecret == "" {
-		return "", errors.New("[GetSecret] Segredo Nulo ou vazio!")
-	} else {
-		return c.admSecret, nil
-	}
-}
-
-func (conf *Config) CarregaConfig(file string) {
+// Carrega as configurações no Objeto Config a partir do arquivo passado como parâmetro
+func (conf *Config) CarregaConfig(file string) error {
+	var err error
 
 	// Definir valores iniciais a partir do arquivo config.ini
 	inidata, err := ini.Load(file)
 	if err != nil {
-		fmt.Printf("Erro: \"%v\". O arquivo \"config.ini\" existe? ", err)
-		os.Exit(1)
+		err = errors.New(err.Error() + ". O arquivo \"config.ini\" existe? ")
+		return err
 	}
-	// TODO: Tratar os erros abaixo
+	// Define as configurações padrão
+	conf.NomeFantasia = "Agenda"
+	conf.HoraInicioAtende, _ = time.ParseDuration("8h")
+	conf.DuracaoAtende, _ = time.ParseDuration("45m")
+	conf.HoraFimAtende, _ = time.ParseDuration("18h")
+	conf.HoraInterval, _ = time.ParseDuration("12h")
+	conf.DuraInterval, _ = time.ParseDuration("1h")
+	conf.DiasSemanaAtende, _ = string2VetorInt("1,2,3,4,5") // Seg-Qua
+	conf.admSecret = "Agend@123"
+	conf.Canais, _ = string2VetorString("EMAIL,WEB")
+	conf.ArmazemDados = "MongoDB"
+	conf.ArmazemHost = "localhost"
+	conf.ArmazemPort = 27017
+	conf.ArmazemDatabase = "Agenda"
+	conf.ApiServerPort = 8080
+	conf.LogOutput = "stdout"
+	conf.LogLevel = "info"
+
+	// Lewitur das Configurações do arquivo "config.ini"
 	sectionAgenda := inidata.Section("Agenda")
 	sectionConfig := inidata.Section("Config")
+	sectionLogger := inidata.Section("Logger")
 	conf.NomeFantasia = sectionAgenda.Key("NomeFantasia").String()
-	conf.HoraInicioAtende, _ = time.ParseDuration(sectionAgenda.Key("HoraInicioAtende").String())
-	conf.DuracaoAtende, _ = time.ParseDuration(sectionAgenda.Key("DuracaoAtende").String())
-	conf.HoraFimAtende, _ = time.ParseDuration(sectionAgenda.Key("HoraFimAtende").String())
-	conf.HoraInterval, _ = time.ParseDuration(sectionAgenda.Key("HoraInterval").String())
-	conf.DuraInterval, _ = time.ParseDuration(sectionAgenda.Key("DuraInterval").String())
-	conf.DiasSemanaAtende, err = string2VetorInt(sectionAgenda.Key("DiasSemanaAtende").String())
-	if err != nil {
-		fmt.Println("Erro:", err)
-		os.Exit(1)
+	if conf.HoraInicioAtende, err = time.ParseDuration(sectionAgenda.Key("HoraInicioAtende").String()); err != nil {
+		return errors.New("Leitura das Configurações: " + err.Error())
 	}
-	conf.admSecret = sectionConfig.Key("admSecret").String()
-	conf.Canais, err = string2VetorString(sectionConfig.Key("canais").String())
-	if err != nil {
-		fmt.Println("Erro:", err)
-		os.Exit(1)
+	if conf.DuracaoAtende, err = time.ParseDuration(sectionAgenda.Key("DuracaoAtende").String()); err != nil {
+		return errors.New("Leitura das Configurações: " + err.Error())
 	}
-	conf.ArmazemDados = sectionConfig.Key("armazemDados").String()
-	conf.ArmazemHost = sectionConfig.Key("host").String()
-	conf.ArmazemPort, _ = sectionConfig.Key("port").Int()
-	conf.ArmazemDatabase = sectionConfig.Key("database").String()
-	conf.ApiServerPort, _ = sectionConfig.Key("apiServerPort").Int()
+	if conf.HoraFimAtende, err = time.ParseDuration(sectionAgenda.Key("HoraFimAtende").String()); err != nil {
+		return errors.New("Leitura das Configurações: " + err.Error())
+	}
+	if conf.HoraInterval, err = time.ParseDuration(sectionAgenda.Key("HoraInterval").String()); err != nil {
+		return errors.New("Leitura das Configurações: " + err.Error())
+	}
+	if conf.DuraInterval, err = time.ParseDuration(sectionAgenda.Key("DuraInterval").String()); err != nil {
+		return errors.New("Leitura das Configurações: " + err.Error())
+	}
+	if conf.DiasSemanaAtende, err = string2VetorInt(sectionAgenda.Key("DiasSemanaAtende").String()); err != nil {
+		return errors.New("Leitura das Configurações: " + err.Error())
+	}
+	if conf.admSecret = sectionConfig.Key("AdmSecret").String(); err != nil {
+		return errors.New("Leitura das Configurações: " + err.Error())
+	}
+	if conf.Canais, err = string2VetorString(sectionConfig.Key("Canais").String()); err != nil {
+		return errors.New("Leitura das Configurações: " + err.Error())
+	}
+	if conf.ArmazemDados = sectionConfig.Key("ArmazemDados").String(); err != nil {
+		return errors.New("Leitura das Configurações: " + err.Error())
+	}
+	if conf.ArmazemHost = sectionConfig.Key("Host").String(); err != nil {
+		return errors.New("Leitura das Configurações: " + err.Error())
+	}
+	if conf.ArmazemPort, err = sectionConfig.Key("Port").Int(); err != nil {
+		return errors.New("Leitura das Configurações: " + err.Error())
+	}
+	if conf.ArmazemDatabase = sectionConfig.Key("Database").String(); err != nil {
+		return errors.New("Leitura das Configurações: " + err.Error())
+	}
+	if conf.ApiServerPort, err = sectionConfig.Key("ApiServerPort").Int(); err != nil {
+		return errors.New("Leitura das Configurações: " + err.Error())
+	}
+	if conf.LogOutput = sectionLogger.Key("LogOutput").String(); err != nil {
+		return errors.New("Leitura das Configurações: " + err.Error())
+	}
+	if conf.LogLevel = sectionLogger.Key("LogLevel").String(); err != nil {
+		return errors.New("Leitura das Configurações: " + err.Error())
+	}
+	return nil
 }
 
 func string2VetorInt(str string) ([]int, error) {
@@ -108,7 +132,7 @@ func string2VetorInt(str string) ([]int, error) {
 			// Verifica valores do dia da semana repetidos
 			for j := 0; j < len(intSlice); j++ {
 				if intSlice[j] == num {
-					return nil, errors.New("Erro: Valor de dia da semana repetido" + fmt.Sprint(num))
+					return nil, errors.New("Valor de dia da semana repetido" + fmt.Sprint(num))
 				}
 			}
 			intSlice[i] = num
@@ -120,13 +144,28 @@ func string2VetorInt(str string) ([]int, error) {
 func string2VetorString(str string) ([]string, error) {
 	// Divide a string usando a função Split do pacote strings
 	strSlice := strings.Split(str, ",")
-	// Cchecar os nomes reservados para os canis: "WAPP,EMAIL,VOZ,SMS,WEB"
-	// TODO: Esses canais devem ser uma lista configurada externamente com seus parametros
-	//       e não fixa no código abaixo
+	// Checar os nomes reservados para os canis: "WAPP,EMAIL,VOZ,SMS,WEB"
 	for _, s := range strSlice {
 		if s != "WAPP" && s != "EMAIL" && s != "VOZ" && s != "SMS" && s != "WEB" {
-			return nil, errors.New("Erro: Canal \"" + s + "\" inválido. Deve ser um dos tipos: WAPP,EMAIL,VOZ,SMS,WEB")
+			return nil, errors.New("Canal \"" + s + "\" inválido. Deve ser um dos tipos: WAPP,EMAIL,VOZ,SMS,WEB")
 		}
 	}
 	return strSlice, nil
+}
+
+func (c *Config) SetSecret(s string) error {
+	if s == "" {
+		return errors.New("[SetSecret] Segredo Nulo ou vazio!")
+	} else {
+		c.admSecret = s
+		return nil
+	}
+}
+
+func (c *Config) GetSecret() (string, error) {
+	if c.admSecret == "" {
+		return "", errors.New("[GetSecret] Segredo Nulo ou vazio!")
+	} else {
+		return c.admSecret, nil
+	}
 }

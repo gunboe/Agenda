@@ -3,7 +3,6 @@ package repository
 import (
 	"Agenda/models"
 	db "Agenda/services/armazenamento"
-	"Agenda/services/config"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -12,8 +11,8 @@ type ConvRepo struct {
 	DB db.ConvDatabase
 }
 
-func (r *ConvRepo) ConectaDB(conf config.Config) error {
-	return r.DB.Connect(conf)
+func (r *ConvRepo) ConectaDB() error {
+	return r.DB.Connect()
 }
 func (r *ConvRepo) fechaDB() error {
 	return r.DB.Close()

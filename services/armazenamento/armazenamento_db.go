@@ -2,7 +2,6 @@ package db
 
 import (
 	"Agenda/models"
-	"Agenda/services/config"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -10,9 +9,9 @@ import (
 // Interface que define os métodos comuns para operações de banco de dados.
 type Database interface {
 	// Conecta a um Banco de Dados
-	Connect(conf config.Config) error
+	Connect() error
 	Close() error
-	TestaBanco(conf config.Config) error
+	TestaBanco() error
 }
 
 // Convenio
