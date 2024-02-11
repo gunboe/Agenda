@@ -4,7 +4,6 @@ import (
 	"Agenda/controllers"
 	"Agenda/models"
 	"Agenda/services/expandErro"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -51,7 +50,6 @@ func (convFunc *ConvenioFunc) FindConvById(c *gin.Context) {
 		c.JSON(reqErro.Code, reqErro)
 		return
 	}
-	fmt.Println("Convenio encontrado com id:", id)
 	c.JSON(http.StatusOK, conv)
 }
 
@@ -66,7 +64,6 @@ func (convFunc *ConvenioFunc) FindConvenios(c *gin.Context) {
 		return
 	}
 	// Converte o Tipo Interface no Tipo dos dados reais e calucula o tamanho do array
-	fmt.Println("Convênio(s) encontrado(s):", jsize)
 	c.JSON(http.StatusOK, convs)
 }
 
@@ -135,8 +132,6 @@ func (convFunc *ConvenioFunc) IndispConv(c *gin.Context) {
 
 // Deleta um Convênio por ID
 func (convFunc *ConvenioFunc) DeleteConvById(c *gin.Context) {
-
-	// pac, err := GetPacientePorId(id)
 	var err error
 	var reqErro *expandErro.Lasquera
 	// Checa ID

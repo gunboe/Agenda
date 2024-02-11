@@ -4,9 +4,10 @@ import (
 	"Agenda/app"
 	convControllers "Agenda/controllers/convenio"
 	pacControllers "Agenda/controllers/paciente"
-	"Agenda/repository"
 	mdb "Agenda/services/armazenamento/mongodb"
 	"Agenda/services/config"
+	"Agenda/services/repository"
+	"Agenda/services/router"
 	"fmt"
 	"os"
 	"strings"
@@ -69,8 +70,10 @@ func main() {
 	// Instancia a Aplicação passando as Conexões de Banco de Dados
 	application := &app.Application{
 		// Conexões de Banco de Dados
-		ConvFunc:     convFunc,
-		PacienteFunc: pacienteFunc,
+		FuncoesDB: &router.Funcs{
+			FuncsConv:     convFunc,
+			FuncsPaciente: pacienteFunc,
+		},
 		// Configurações
 		Configuracao: conf,
 	}

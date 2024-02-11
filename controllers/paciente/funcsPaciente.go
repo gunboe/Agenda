@@ -3,7 +3,7 @@ package pacControllers
 import (
 	"Agenda/common"
 	"Agenda/models"
-	"Agenda/repository"
+	"Agenda/services/repository"
 	"errors"
 	"fmt"
 	"strings"

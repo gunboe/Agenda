@@ -3,9 +3,10 @@ package convControllers
 import (
 	"Agenda/common"
 	"Agenda/models"
-	"Agenda/repository"
+	"Agenda/services/logger"
+	"Agenda/services/repository"
 	"errors"
-	"fmt"
+	"strconv"
 	"strings"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -22,36 +23,38 @@ func (convFunc *ConvenioFunc) CriaConvenio(conv models.Convenio) (interface{}, e
 	// Verifica o Convenio
 	err := models.ChecarConvenio(conv)
 	if err != nil {
-		fmt.Println("Erro: Convenio: ", err)
+		logger.Error("Convênio: ", err)
 		return nil, err
 	}
 	// Checa se já existe Convenio pelo Nome
 	convs, err := convFunc.ConvRepo.GetConveniosByName(conv.NomeConv)
 	// convs, err := armazenamento.GetConveniosByName(conv.NomeConv)
 	if err != nil {
-		fmt.Println("Erro: Convenio: )", err)
+		logger.Error("Convênio: ", err)
 		return nil, err
 	}
 	if convs == nil {
 		// Checa se já existe Convênio pelo Nr Prestador
 		c, err := convFunc.ConvRepo.GetConveniosByNrPrestador(conv.NrPrestador)
 		if err == nil {
-			err = errors.New("Novo Convênio:\"" + conv.NomeConv + "\" já existe com o mesmo Nr Prestador:" + c.NrPrestador + " mas com o Nome: " + c.NomeConv)
-			fmt.Println("Erro: Convenio: ", err)
+			err = errors.New("Convênio: " + conv.NomeConv + " já existe com o mesmo Nr Prestador:" + c.NrPrestador + " mas com o Nome: " + c.NomeConv)
+			logger.Error(err.Error(), nil)
 			return nil, err
 		}
 		if c.ID.IsZero() {
 			result, err := convFunc.ConvRepo.CreateConvenio(conv)
 			if err != nil {
-				fmt.Println("Erro: Convenio: ", err)
+				logger.Error("Convênio: ", err)
+				return nil, err
 			} else {
-				fmt.Println("Convenio Criado e armazenado:", result)
+				logger.Info("Convênio Criado e armazenado:" + result.(primitive.ObjectID).Hex())
 				return result, nil
 			}
 		}
 	} else {
-		err = errors.New("Convênio:\"" + conv.NomeConv + "\" já existe com o mesmo nome sob o Nr Prestador:" + conv.NrPrestador)
-		fmt.Println(err.Error())
+		err = errors.New("Convênio: " + conv.NomeConv + " já existe com o mesmo Nome sob o Nr Prestador:" + conv.NrPrestador)
+		logger.Error(err.Error(), nil)
+		return nil, err
 	}
 	return nil, err
 }
@@ -61,13 +64,14 @@ func (convFunc *ConvenioFunc) CriaConvenio(conv models.Convenio) (interface{}, e
 func (convFunc *ConvenioFunc) GetConveniosPorNome(conv string) []models.Convenio {
 	convs, err := convFunc.ConvRepo.GetConveniosByName(conv)
 	if err != nil {
-		fmt.Println("Erro: Convenio: ", err)
+		logger.Error("Erro: Convenio: ", err)
 		return nil
 	}
 	if convs == nil {
-		fmt.Println("Erro: Convênio: " + conv + " não encontrado.")
+		logger.Error("Erro: Convênio: "+conv+" não encontrado.", nil)
 		return nil
 	}
+	logger.Info("Convênio: encontrado")
 	return convs
 }
 
@@ -76,8 +80,10 @@ func (convFunc *ConvenioFunc) GetConveniosPorNome(conv string) []models.Convenio
 func (convFunc *ConvenioFunc) GetConvenioPorId(id primitive.ObjectID) (models.Convenio, error) {
 	conv, err := convFunc.ConvRepo.GetConvenioById(id)
 	if err != nil {
+		logger.Error("Convênio: ", err)
 		return models.Convenio{}, err
 	}
+	logger.Info("Convênio: encontrado ID: " + id.Hex())
 	return conv, nil
 }
 
@@ -86,16 +92,16 @@ func (convFunc *ConvenioFunc) GetConvenioPorId(id primitive.ObjectID) (models.Co
 func (convFunc *ConvenioFunc) ListaConvenio(nome string, formato ...string) interface{} {
 	convs, err := convFunc.ConvRepo.GetConveniosByName(nome)
 	if err != nil {
-		fmt.Println("Erro: Convenio: ", err)
+		logger.Error("Convenio: ", err)
 		return nil
 	} else {
 		// Se houver "formato" e do tipo "bson", imprima neste.
 		if len(formato) > 0 && strings.EqualFold(formato[0], "bson") {
-			fmt.Println("listando Convênios em bson")
+			logger.Info("Convênio: listando em bson, econtrados:" + strconv.Itoa(len(convs)))
 			return convs
 			// Caso contrário, use por padrão "Json"
 		} else {
-			fmt.Println("listando Convênios em json")
+			logger.Info("Convênio: listando em json, econtrados:" + strconv.Itoa(len(convs)))
 			return common.PrintJSON(convs)
 		}
 	}
@@ -107,20 +113,19 @@ func (convFunc *ConvenioFunc) ListaConvenio(nome string, formato ...string) inte
 func (convFunc *ConvenioFunc) AtualizaConvPorNome(nome string, novoConv models.Convenio, todos bool) {
 	// Checa se o Nome do Convenio está vazio
 	if nome == "" {
-		fmt.Println("Erro: Nome do Convênio nulo/vazio.")
+		logger.Error("Convênio: Nome nulo/vazio", nil)
 	} else {
 		var err error
 		if err != nil {
-			fmt.Println("Erro: Convenio: ", err)
+			logger.Error("Convênio: ", err)
 		} else {
 			// Atualiza os dados do Convênio
 			result, err := convFunc.ConvRepo.UpdateConvenioByName(nome, novoConv, todos)
 			if err != nil {
-				fmt.Println("Erro: Convenio: ", err)
+				logger.Error("Convênio: ", err)
 			} else {
 				r := result.(mongo.UpdateResult)
-				fmt.Println("Convenios encontrados:", r.MatchedCount)
-				fmt.Println("Convenios atualizados:", r.ModifiedCount)
+				logger.Info("Convenios: encontrados:" + strconv.FormatInt(r.MatchedCount, 10) + " atualizados:" + strconv.FormatInt(r.ModifiedCount, 10))
 			}
 		}
 	}
@@ -134,8 +139,7 @@ func (convFunc *ConvenioFunc) AtualizaConvPorId(id primitive.ObjectID, novoConv 
 	// Testa as alterações estão em conformidade com o Modelo
 	err = models.ChecarConvenio(novoConv)
 	if err != nil {
-		err = errors.New("Checagem de atributos: " + err.Error())
-		fmt.Println(err)
+		logger.Error("Convênio: Checagem de atributos: ", err)
 		return err
 	}
 	// Atualiza os dados do Convênio
@@ -144,13 +148,16 @@ func (convFunc *ConvenioFunc) AtualizaConvPorId(id primitive.ObjectID, novoConv 
 	if err == nil {
 		if r.MatchedCount > 0 {
 			if r.ModifiedCount > 0 {
-				fmt.Println("Convênio atualizado:", id.Hex())
+				logger.Info("Convênio atualizado: " + id.Hex())
 			} else {
-				fmt.Println("Convênio encontrado, mas nada foi atualizado")
+				logger.Info("Convênio encontrado, mas nada foi alterado")
 			}
 		} else {
-			err = errors.New("Convênio ID: " + id.Hex() + " NÃO encontrado")
+			err = errors.New("Convênio: " + id.Hex() + " NÃO encontrado")
+			logger.Error(err.Error(), nil)
 		}
+	} else {
+		logger.Error(err.Error(), nil)
 	}
 	return err
 }
@@ -164,16 +171,19 @@ func (convFunc *ConvenioFunc) HabiliteConvPorId(id primitive.ObjectID, b bool) e
 		if r.MatchedCount > 0 {
 			if r.ModifiedCount > 0 {
 				if b {
-					fmt.Println("Convênio:", id.Hex(), "Indisponível")
+					logger.Info("Convênio: " + id.Hex() + " Indisponível")
 				} else {
-					fmt.Println("Convênio:", id.Hex(), "Disponível")
+					logger.Info("Convênio: " + id.Hex() + " Disponível")
 				}
 			} else {
-				fmt.Println("Convênio encontrado, mas nada foi alterado")
+				logger.Info("Convênio encontrado, mas nada foi alterado")
 			}
 		} else {
-			err = errors.New("Convênio ID: " + id.Hex() + " NÃO encontrado")
+			err = errors.New("Convênio: " + id.Hex() + " NÃO encontrado")
+			logger.Error(err.Error(), nil)
 		}
+	} else {
+		logger.Error(err.Error(), nil)
 	}
 	return err
 }
@@ -183,15 +193,14 @@ func (convFunc *ConvenioFunc) HabiliteConvPorId(id primitive.ObjectID, b bool) e
 func (convFunc *ConvenioFunc) DeletaConveniosPorNome(nome string, todos bool) {
 	// Checa se o Nome do Convenio está vazio
 	if nome == "" {
-		fmt.Println("Erro: Nome do Convênio nulo/vazio.")
+		logger.Error("Convênio: Nome nulo/vazio.", nil)
 	} else {
 		result, err := convFunc.ConvRepo.DeleteConvenioByName(nome, todos)
 		r := result.(*mongo.DeleteResult)
 		if err != nil {
-			fmt.Println("Erro: Convenio: ", err)
-			fmt.Println("Provavel que o Convênio:\"" + nome + "\" não exista no Armazém.")
+			logger.Error("Convênio: Provavel que o Convênio  não exista no Armazém: ", err)
 		} else {
-			fmt.Println("Convenios deletados:", r.DeletedCount)
+			logger.Info("Convênios deletados:" + strconv.FormatInt(r.DeletedCount, 10))
 		}
 	}
 }
@@ -200,19 +209,19 @@ func (convFunc *ConvenioFunc) DeletaConveniosPorNome(nome string, todos bool) {
 // NÃO PERMITIR QUE REMOVA CONVENIO SE EXISTE PACIENTE USANDO ESTE!!!!
 func (convFunc *ConvenioFunc) DeletaConvenioPorId(id primitive.ObjectID) error {
 	var err error
-	// Checa se o Nome do Convenio está vazio
+	// Checa se o ID do Convenio está vazio
 	if id.IsZero() {
-		fmt.Println("iD nulo/vazio")
+		logger.Info("iD nulo/vazio")
 	} else {
 		result, err := convFunc.ConvRepo.DeleteConvenioById(id)
 		r := result.(*mongo.DeleteResult)
 		if err == nil {
 			if r.DeletedCount == 0 {
-				err = errors.New("Convênio não encontrado")
-				fmt.Println(err)
+				err = errors.New("Convênio: Não encontrado")
+				logger.Error(err.Error(), nil)
 				return err
 			} else {
-				fmt.Println("Convenio deletado:", id)
+				logger.Info("Convenio deletado:" + id.Hex())
 				return nil
 			}
 		}
