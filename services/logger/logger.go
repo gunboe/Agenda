@@ -40,13 +40,15 @@ func setLogLevel(c config.Config) zapcore.Level {
 	}
 }
 
+// Gera mensagem de Informação no Logger
 func Info(message string, tags ...zap.Field) {
 	log.Info(message, tags...)
 	log.Sync()
 }
 
+// Gera mensagem de Erro no Logger
 func Error(message string, err error, tags ...zap.Field) {
 	tags = append(tags, zap.NamedError("error", err))
-	log.Info(message, tags...)
+	log.Error(message, tags...)
 	log.Sync()
 }

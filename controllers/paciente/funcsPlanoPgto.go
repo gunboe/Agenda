@@ -2,8 +2,8 @@ package pacControllers
 
 import (
 	"Agenda/models"
+	"Agenda/services/logger"
 	"errors"
-	"fmt"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -44,7 +44,7 @@ func (pacFunc *PacienteFunc) InsPlanoPgtoPaciente(id primitive.ObjectID, plano m
 	pac, err := pacFunc.GetPacientePorId(id)
 	if err != nil {
 		err = errors.New("Paciente não encontrado: " + err.Error())
-		fmt.Println(err)
+		logger.Error(err.Error(), nil)
 		return nil, err
 	} else {
 		// Cria um novo ID para o Plano de Pagamento
@@ -54,13 +54,13 @@ func (pacFunc *PacienteFunc) InsPlanoPgtoPaciente(id primitive.ObjectID, plano m
 		// Checa do Modelo Paciente após o append do novo Plano
 		err = models.ChecarPaciente(pac)
 		if err != nil {
-			fmt.Println(err)
+			logger.Error(err.Error(), nil)
 			return nil, err
 		} else {
 			err = pacFunc.ValidaConvPlanoPgto(plano)
 			if err != nil {
 				err = errors.New("Plano de Pagamento: " + err.Error())
-				fmt.Println(err)
+				logger.Error(err.Error(), nil)
 				return nil, err
 			} else {
 				// Se tudo certo, Insere no MongoDB o novo PlanoPgto do Paciente
@@ -69,19 +69,22 @@ func (pacFunc *PacienteFunc) InsPlanoPgtoPaciente(id primitive.ObjectID, plano m
 				if err == nil {
 					if r.MatchedCount > 0 {
 						if r.ModifiedCount > 0 {
-							fmt.Println("Plano adicionado com sucesso no Paciente:", pac.Nome)
+							logger.Info("Plano adicionado com sucesso no Paciente: " + pac.Nome)
 							return plano.ID, nil
 						} else {
 							err = errors.New("Plano de Pagamento não Inserido no Paciente: " + pac.Nome)
+							logger.Error(err.Error(), nil)
 						}
 					} else {
 						err = errors.New("Paciente não encontrado")
+						logger.Error(err.Error(), nil)
 					}
 				} else {
 					err = errors.New("Plano de Pagamento no Armazém: " + err.Error())
+					logger.Error(err.Error(), nil)
 				}
 			}
-			fmt.Println(err)
+			logger.Error(err.Error(), nil)
 			return nil, err
 		}
 	}
@@ -94,15 +97,17 @@ func (pacFunc *PacienteFunc) DeletaPlanoPorId(pacid, planoid primitive.ObjectID)
 	// Checa se o ID do Plano está vazio
 	if pacid.IsZero() || planoid.IsZero() {
 		err = errors.New("id nulo/vazio")
+		logger.Error(err.Error(), nil)
 	} else {
 		result, err := pacFunc.PacRepo.DeletePlanoById(pacid, planoid)
 		r := result.(*mongo.UpdateResult)
 		if err == nil {
 			if r.ModifiedCount == 0 {
-				err = errors.New("plano não encontrado")
+				err = errors.New("Plano " + planoid.Hex() + " não encontrado no Paciente: " + pacid.Hex())
+				logger.Error(err.Error(), nil)
 				return err
 			} else {
-				fmt.Println("Plano de Pagamento deletado")
+				logger.Info("Plano de Pagamento deletado")
 				return nil
 			}
 		}

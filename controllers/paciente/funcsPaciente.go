@@ -3,9 +3,10 @@ package pacControllers
 import (
 	"Agenda/common"
 	"Agenda/models"
+	"Agenda/services/logger"
 	"Agenda/services/repository"
 	"errors"
-	"fmt"
+	"strconv"
 	"strings"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -24,7 +25,7 @@ func (pacFunc *PacienteFunc) CriaPaciente(pac models.Paciente) (interface{}, err
 	// Verifica os atributos do Paciente inclusive os PlanosPgto (com duplicação!)
 	err = models.ChecarPaciente(pac)
 	if err != nil {
-		fmt.Println("Erro: Paciente: ", err)
+		logger.Error("Erro: Paciente: ", err)
 		return nil, err
 	}
 	// Adiciona um ID e Valida os PlanoPagtos do Paciente um por um
@@ -34,7 +35,7 @@ func (pacFunc *PacienteFunc) CriaPaciente(pac models.Paciente) (interface{}, err
 		// Checa os Atributos do PlanoPgto
 		err = pacFunc.ValidaConvPlanoPgto(v)
 		if err != nil {
-			fmt.Println("Erro: Paciente: ", err)
+			logger.Error("Erro: Paciente: ", err)
 			return nil, err
 		}
 	}
@@ -45,14 +46,15 @@ func (pacFunc *PacienteFunc) CriaPaciente(pac models.Paciente) (interface{}, err
 		// Salva Paciente no armazém
 		result, err := pacFunc.PacRepo.CreatePaciente(pac)
 		if err != nil {
-			fmt.Println("Erro: Paciente: ", err)
+			logger.Error("Erro: Paciente: ", err)
+			return nil, err
 		} else {
-			fmt.Println("Paciente Criado e armazenado:", result)
+			logger.Info("Paciente Criado e armazenado: " + result.(primitive.ObjectID).Hex())
 			return result, nil
 		}
 	} else {
-		err = errors.New("CPF (" + pac.CPF + ") já cadastrado.")
-		fmt.Println(err.Error())
+		err = errors.New("CPF (" + pac.CPF + ") já cadastrado")
+		logger.Error(err.Error(), nil)
 	}
 	return nil, err
 }
@@ -62,11 +64,11 @@ func (pacFunc *PacienteFunc) CriaPaciente(pac models.Paciente) (interface{}, err
 func (pacFunc *PacienteFunc) GetPacientesPorNome(pac string) []models.Paciente {
 	pacs, err := pacFunc.PacRepo.GetPacientesByName(pac)
 	if err != nil {
-		fmt.Println("Erro: Paciente: ", err)
+		logger.Error("Erro: Paciente: ", err)
 		return nil
 	}
 	if pacs == nil {
-		fmt.Println("Erro: Paciente: " + pac + " não encontrado.")
+		logger.Error("Erro: Paciente: "+pac+" não encontrado", nil)
 		return nil
 	}
 	return pacs
@@ -97,16 +99,16 @@ func (pacFunc *PacienteFunc) GetPacientePorCPF(cpf string) (models.Paciente, err
 func (pacFunc *PacienteFunc) ListaPaciente(nome string, formato ...string) interface{} {
 	pacs, err := pacFunc.PacRepo.GetPacientesByName(nome)
 	if err != nil {
-		fmt.Println("paciente(s) não encontrado:", err)
+		logger.Error("paciente(s) não encontrado: ", err)
 		return nil
 	} else {
 		// Se houver "formato" e do tipo "bson", imprima neste.
 		if len(formato) > 0 && strings.EqualFold(formato[0], "bson") {
-			// fmt.Println("lista de Pacientes:\n", pacs)
+			// logger.Error("lista de Pacientes:\n", pacs)
 			return pacs
 			// Caso contrário, use por padrão "Json"
 		} else {
-			// fmt.Println("lista de Pacientes:\n", common.PrintJSON(pacs))
+			// logger.Error("lista de Pacientes:\n", common.PrintJSON(pacs))
 			return common.PrintJSON(pacs)
 		}
 	}
@@ -118,21 +120,21 @@ func (pacFunc *PacienteFunc) ListaPaciente(nome string, formato ...string) inter
 func (pacFunc *PacienteFunc) AtualizaPacPorNome(nome string, novoPac models.Paciente, todos bool) {
 	// Checa se o Nome do Paciente para a Busca está vazio
 	if nome == "" {
-		fmt.Println("Erro: Nome do Paciente nulo/vazio.")
+		logger.Error("Erro: Nome do Paciente nulo/vazio.", nil)
 	} else {
 		// Checa se todos os dados do Paciente estão ok
 		var err error
 		if err != nil {
-			fmt.Println("Erro: Paciente: ", err)
+			logger.Error("Erro: Paciente: ", err)
 		} else {
 			// Atualiza os dados do Paciente
 			result, err := pacFunc.PacRepo.UpdatePacienteByName(nome, novoPac, todos)
 			r := result.(*mongo.UpdateResult)
 			if err != nil {
-				fmt.Println("Erro: Paciente: ", err)
+				logger.Error("Erro: Paciente: ", err)
 			} else {
-				fmt.Println("Pacientes encontrados:", r.MatchedCount)
-				fmt.Println("Pacientes atualizados:", r.ModifiedCount)
+				logger.Info("Pacientes encontrados: " + strconv.FormatInt(r.MatchedCount, 10))
+				logger.Info("Pacientes atualizados: " + strconv.FormatInt(r.ModifiedCount, 10))
 			}
 		}
 	}
@@ -144,7 +146,7 @@ func (pacFunc *PacienteFunc) AtualizaPacPorId(id primitive.ObjectID, novoPac mod
 	// Verifica o Paciente e seus PlanosPgtos
 	err = models.ChecarPaciente(novoPac)
 	if err != nil {
-		fmt.Println("erro nos atributos:", err)
+		logger.Error("erro nos atributos: ", err)
 		return err
 	}
 	// Valida os PlanoPagtos do Paciente com os Convênios
@@ -152,7 +154,7 @@ func (pacFunc *PacienteFunc) AtualizaPacPorId(id primitive.ObjectID, novoPac mod
 		// Checa os Atributos do PlanoPgto
 		err = pacFunc.ValidaConvPlanoPgto(v)
 		if err != nil {
-			fmt.Println("erro na validação:", err)
+			logger.Error("erro na validação: ", err)
 			return err
 		}
 	}
@@ -162,12 +164,13 @@ func (pacFunc *PacienteFunc) AtualizaPacPorId(id primitive.ObjectID, novoPac mod
 	if err == nil {
 		if r.MatchedCount > 0 {
 			if r.ModifiedCount > 0 {
-				fmt.Println("Paciente atualizado:", id.Hex())
+				logger.Info("Paciente atualizado: " + id.Hex())
 			} else {
-				fmt.Println("Paciente encontrado, mas nada foi atualizado")
+				logger.Info("Paciente encontrado, mas nada foi atualizado")
 			}
 		} else {
 			err = errors.New("Paciente ID: " + id.Hex() + " NÃO encontrado")
+			logger.Error(err.Error(), nil)
 		}
 	}
 	return err
@@ -182,12 +185,12 @@ func (pacFunc *PacienteFunc) HabilitePacPorId(id primitive.ObjectID, b bool) err
 		if r.MatchedCount > 0 {
 			if r.ModifiedCount > 0 {
 				if b {
-					fmt.Println("paciente:", id.Hex(), "Bloqueado")
+					logger.Info("paciente: " + id.Hex() + " Bloqueado")
 				} else {
-					fmt.Println("paciente:", id.Hex(), "Desbloqueado")
+					logger.Info("paciente: " + id.Hex() + " Desbloqueado")
 				}
 			} else {
-				fmt.Println("Paciente encontrado, mas nada foi alterado")
+				logger.Info("Paciente encontrado, mas nada foi alterado")
 			}
 		} else {
 			err = errors.New("Paciente ID: " + id.Hex() + " NÃO encontrado")
@@ -201,15 +204,14 @@ func (pacFunc *PacienteFunc) HabilitePacPorId(id primitive.ObjectID, b bool) err
 func (pacFunc *PacienteFunc) DeletaPacientesPorNome(nome string, todos bool) {
 	// Checa se o Nome do Paciente está vazio
 	if nome == "" {
-		fmt.Println("Erro: Nome do Paciente nulo/vazio.")
+		logger.Error("Erro: Nome do Paciente nulo/vazio", nil)
 	} else {
 		result, err := pacFunc.PacRepo.DeletePacienteByName(nome, todos)
 		r := result.(*mongo.DeleteResult)
 		if err != nil {
-			fmt.Println("Erro: Paciente: ", err)
-			fmt.Println("Provavel que o Paciente:\"" + nome + "\" não exista no Armazém.")
+			logger.Error("Erro: Paciente: "+nome+" não existe no Armazém: ", err)
 		} else {
-			fmt.Println("Pacientes deletados:", r.DeletedCount)
+			logger.Info("Pacientes deletados: " + strconv.FormatInt(r.DeletedCount, 10))
 		}
 	}
 }
@@ -220,17 +222,17 @@ func (pacFunc *PacienteFunc) DeletaPacientePorId(id primitive.ObjectID) error {
 	var err error
 	// Checa se o ID do Paciente está vazio
 	if id.IsZero() {
-		err = errors.New("id nulo/vazio")
+		err = errors.New("ID nulo/vazio")
 	} else {
 		result, err := pacFunc.PacRepo.DeletePacienteById(id)
 		r := result.(*mongo.DeleteResult)
 		if err == nil {
 			if r.DeletedCount == 0 {
-				err = errors.New("paciente não encontrado")
-				fmt.Println(err)
+				err = errors.New("Erro: paciente não encontrado: " + id.Hex())
+				logger.Error(err.Error(), nil)
 				return err
 			} else {
-				fmt.Println(r.DeletedCount, "paciente deletado")
+				logger.Info("Paciente deletado: " + id.Hex())
 				return nil
 			}
 		}

@@ -27,7 +27,7 @@ func InitRoutes(rg *gin.RouterGroup, fr *Funcs) {
 	rg.PUT("/updatePacById/:pacId", fr.FuncsPaciente.UpdatePac)
 	rg.PATCH("/bloqPacById/:pacId", fr.FuncsPaciente.BloqPac)
 	rg.DELETE("/deletePacById/:pacId", fr.FuncsPaciente.DeletePacById)
-	rg.DELETE("/deletePlanoPac/:pacId/:planoId", fr.FuncsPaciente.DelPlanoPac)
+	rg.DELETE("/deletePlanoPac/:pacId/planoId/:planoId", fr.FuncsPaciente.DelPlanoPac)
 	// Convenio
 	rg.POST("/createConv", fr.FuncsConv.CreateConv)
 	rg.GET("/getConvById/:convId", fr.FuncsConv.FindConvById)

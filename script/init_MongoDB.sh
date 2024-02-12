@@ -7,12 +7,13 @@ echo -n Iniciando Banco de dados...
 banco=mongodb
 
 case $banco in
-    "mongo")
+    "mongodb")
         echo MongoDB
         # Inicializa Container Mongo
-        echo docker run -d --rm -p 27017:27017 --name mongo mongo
+        docker run -d --rm -p 27017:27017 --name mongo mongo
+	    sleep 5
         # Executa o Shell do Mongo
-        echo docker exec -it mongo mongosh
+        docker exec -it mongo mongosh
         ;;
     "postgres")
         # Inicializa Container Postgres

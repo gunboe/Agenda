@@ -37,7 +37,7 @@ func (convFunc *ConvenioFunc) CriaConvenio(conv models.Convenio) (interface{}, e
 		// Checa se já existe Convênio pelo Nr Prestador
 		c, err := convFunc.ConvRepo.GetConveniosByNrPrestador(conv.NrPrestador)
 		if err == nil {
-			err = errors.New("Convênio: " + conv.NomeConv + " já existe com o mesmo Nr Prestador:" + c.NrPrestador + " mas com o Nome: " + c.NomeConv)
+			err = errors.New("Convênio: " + conv.NomeConv + " já existe com o mesmo Nr Prestador: " + c.NrPrestador + " mas com o Nome: " + c.NomeConv)
 			logger.Error(err.Error(), nil)
 			return nil, err
 		}
@@ -47,12 +47,12 @@ func (convFunc *ConvenioFunc) CriaConvenio(conv models.Convenio) (interface{}, e
 				logger.Error("Convênio: ", err)
 				return nil, err
 			} else {
-				logger.Info("Convênio Criado e armazenado:" + result.(primitive.ObjectID).Hex())
+				logger.Info("Convênio Criado e armazenado: " + result.(primitive.ObjectID).Hex())
 				return result, nil
 			}
 		}
 	} else {
-		err = errors.New("Convênio: " + conv.NomeConv + " já existe com o mesmo Nome sob o Nr Prestador:" + conv.NrPrestador)
+		err = errors.New("Convênio: " + conv.NomeConv + " já existe com o mesmo Nome sob o Nr Prestador: " + conv.NrPrestador)
 		logger.Error(err.Error(), nil)
 		return nil, err
 	}
@@ -97,11 +97,11 @@ func (convFunc *ConvenioFunc) ListaConvenio(nome string, formato ...string) inte
 	} else {
 		// Se houver "formato" e do tipo "bson", imprima neste.
 		if len(formato) > 0 && strings.EqualFold(formato[0], "bson") {
-			logger.Info("Convênio: listando em bson, econtrados:" + strconv.Itoa(len(convs)))
+			logger.Info("Convênio: listando em bson, econtrados: " + strconv.Itoa(len(convs)))
 			return convs
 			// Caso contrário, use por padrão "Json"
 		} else {
-			logger.Info("Convênio: listando em json, econtrados:" + strconv.Itoa(len(convs)))
+			logger.Info("Convênio: listando em json, econtrados: " + strconv.Itoa(len(convs)))
 			return common.PrintJSON(convs)
 		}
 	}
@@ -125,7 +125,7 @@ func (convFunc *ConvenioFunc) AtualizaConvPorNome(nome string, novoConv models.C
 				logger.Error("Convênio: ", err)
 			} else {
 				r := result.(mongo.UpdateResult)
-				logger.Info("Convenios: encontrados:" + strconv.FormatInt(r.MatchedCount, 10) + " atualizados:" + strconv.FormatInt(r.ModifiedCount, 10))
+				logger.Info("Convenios: encontrados: " + strconv.FormatInt(r.MatchedCount, 10) + " atualizados: " + strconv.FormatInt(r.ModifiedCount, 10))
 			}
 		}
 	}
@@ -200,7 +200,7 @@ func (convFunc *ConvenioFunc) DeletaConveniosPorNome(nome string, todos bool) {
 		if err != nil {
 			logger.Error("Convênio: Provavel que o Convênio  não exista no Armazém: ", err)
 		} else {
-			logger.Info("Convênios deletados:" + strconv.FormatInt(r.DeletedCount, 10))
+			logger.Info("Convênios deletados: " + strconv.FormatInt(r.DeletedCount, 10))
 		}
 	}
 }
@@ -221,7 +221,7 @@ func (convFunc *ConvenioFunc) DeletaConvenioPorId(id primitive.ObjectID) error {
 				logger.Error(err.Error(), nil)
 				return err
 			} else {
-				logger.Info("Convenio deletado:" + id.Hex())
+				logger.Info("Convenio deletado: " + id.Hex())
 				return nil
 			}
 		}
