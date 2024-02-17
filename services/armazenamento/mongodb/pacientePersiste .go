@@ -74,6 +74,22 @@ func (m *MongoDB) GetPacienteById(id primitive.ObjectID) (models.Paciente, error
 }
 
 // Ler/Retorna Pacientes por CPF. Se não encontrar retorna um Erro e um Paciente com atributos zerados.
+func (m *MongoDB) GetPacienteByEmailSecret(email, secret string) (models.Paciente, error) {
+	// Definir o Banco e a Coleção de Dados
+	Pacientes := m.Client.Database(m.Configuracao.ArmazemDatabase).Collection(colecaoPaciente)
+	// Cria os filtros adequados de pesquisa no MongoDB
+	filter := bson.M{"email": email, "secret": secret}
+	// Cria um Paciente
+	var pac models.Paciente
+	// Alinha o cursor de busca
+	err := Pacientes.FindOne(ctx, filter).Decode(&pac)
+	if err != nil {
+		return pac, err
+	}
+	return pac, nil
+}
+
+// Ler/Retorna Pacientes por CPF. Se não encontrar retorna um Erro e um Paciente com atributos zerados.
 func (m *MongoDB) GetPacienteByCPF(cpf string) (models.Paciente, error) {
 	// Definir o Banco e a Coleção de Dados
 	Pacientes := m.Client.Database(m.Configuracao.ArmazemDatabase).Collection(colecaoPaciente)

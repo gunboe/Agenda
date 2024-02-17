@@ -18,6 +18,25 @@ import (
 // Routes Control para Pacientes
 /////////////////////////////////
 
+// Login Paciente
+func (pacFunc *PacienteFunc) LoginPaciente(c *gin.Context) {
+	// Cria o objeto para receber os atributos do Login
+	var pacLogin controllers.PacienteLogin
+	// Avalia os Atributos do Login de Paciente vindos de: "c *gin.Context"
+	if err := controllers.AvaliarRequest(c, &pacLogin); err != nil {
+		return
+	}
+	email := pacLogin.Email
+	secret := common.MD5(pacLogin.Secret)
+	pac, err := pacFunc.GetPacientePorEmailSecret(email, secret)
+	if err != nil {
+		reqErro := expandErro.NewForbiddenError("email ou secret incorreto")
+		c.JSON(reqErro.Code, reqErro)
+		return
+	}
+	c.JSON(http.StatusOK, pac)
+}
+
 // Cria Paciente por Json
 func (pacFunc *PacienteFunc) CreatePac(c *gin.Context) {
 	// Avalia os atributos do Request de Paciente
@@ -30,7 +49,6 @@ func (pacFunc *PacienteFunc) CreatePac(c *gin.Context) {
 	result, err := pacFunc.CriaPaciente(pacRequest)
 	if err != nil {
 		reqErro := expandErro.NewBadRequestError("Erros na regra de negócio: " + err.Error())
-
 		c.JSON(reqErro.Code, reqErro)
 		return
 	}
@@ -89,7 +107,6 @@ func (pacFunc *PacienteFunc) FindPacById(c *gin.Context) {
 // RC: Retornar TODOS ("*") objetos Json do Paciente ou por Nome
 func (pacFunc *PacienteFunc) FindPacientes(c *gin.Context) {
 	// Tenta realizar a busca
-	// nome := c.Param("pac")
 	pacs := pacFunc.ListaPaciente(c.Param("nome"), "bson")
 	jsize := len(pacs.([]models.Paciente))
 	if jsize == 0 {

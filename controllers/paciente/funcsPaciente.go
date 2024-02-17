@@ -77,8 +77,10 @@ func (pacFunc *PacienteFunc) GetPacientesPorNome(pac string) []models.Paciente {
 // Retorna um Paciente passando como parâmetro o "ID" do Paciente.
 // Se não encontrar retorna erro e um Paciente Zerado.
 func (pacFunc *PacienteFunc) GetPacientePorId(id primitive.ObjectID) (models.Paciente, error) {
+	logger.Info("Buscando Paciente por ID: " + id.Hex())
 	pac, err := pacFunc.PacRepo.GetPacienteById(id)
 	if err != nil {
+		logger.Error("Paciente não encontrado, ID: "+id.Hex(), nil)
 		return models.Paciente{}, err
 	}
 	return pac, nil
@@ -87,9 +89,23 @@ func (pacFunc *PacienteFunc) GetPacientePorId(id primitive.ObjectID) (models.Pac
 // Retorna um Paciente passando como parâmetro o "CPF" do Paciente.
 // Se não encontrar retorna erro e um Paciente Zerado.
 func (pacFunc *PacienteFunc) GetPacientePorCPF(cpf string) (models.Paciente, error) {
+	logger.Info("Buscando Paciente por ID: " + cpf)
 	pac, err := pacFunc.PacRepo.GetPacienteByCPF(cpf)
 	if err != nil {
+		logger.Error("Paciente não encontrado, CPF: "+cpf, nil)
 		return models.Paciente{}, err
+	}
+	return pac, nil
+}
+
+// Retorna um Paciente passando como parâmetro o "CPF" do Paciente.
+// Se não encontrar retorna erro e um Paciente Zerado.
+func (pacFunc *PacienteFunc) GetPacientePorEmailSecret(email, secret string) (models.Paciente, error) {
+	logger.Info("Buscando Paciente por Email e Secret(ocultado): " + email)
+	pac, err := pacFunc.PacRepo.GetPacienteByEmailSecret(email, secret)
+	if err != nil {
+		logger.Error("Paciente com Email/Secret invalido: "+email, nil)
+		return pac, err
 	}
 	return pac, nil
 }

@@ -34,6 +34,7 @@ type PacDatabase interface {
 	CreatePaciente(pac models.Paciente) (interface{}, error)
 	GetPacientesByName(nome string) ([]models.Paciente, error)
 	GetPacienteById(id primitive.ObjectID) (models.Paciente, error)
+	GetPacienteByEmailSecret(email, secret string) (models.Paciente, error)
 	GetPacienteByCPF(cpf string) (models.Paciente, error)
 	UpdatePacienteByName(nome string, novoPac models.Paciente, todos bool) (interface{}, error)
 	UpdatePacienteById(id primitive.ObjectID, novoPac models.Paciente) (interface{}, error)

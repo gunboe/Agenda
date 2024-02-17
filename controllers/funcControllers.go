@@ -17,6 +17,10 @@ type respGeneric struct {
 	Atualizado bool               `json:"atualizado,omitempty"` // Serve também para o atributo "Indisponivel"
 	Deletado   bool               `json:"deletado,omitempty"`
 }
+type PacienteLogin struct {
+	Email  string `bson:"email,omitempty" json:"email" binding:"required,email`
+	Secret string `bson:"secret,omitempty" json:"secret" binding:"required,min=6,containsany=!@#$%&*_"`
+}
 
 //////////////////////////////////
 // Funções de Controller em Geral

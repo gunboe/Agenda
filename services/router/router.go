@@ -28,6 +28,7 @@ func InitRoutes(rg *gin.RouterGroup, fr *Funcs) {
 	rg.PATCH("/bloqPacById/:pacId", fr.FuncsPaciente.BloqPac)
 	rg.DELETE("/deletePacById/:pacId", fr.FuncsPaciente.DeletePacById)
 	rg.DELETE("/deletePlanoPac/:pacId/planoId/:planoId", fr.FuncsPaciente.DelPlanoPac)
+	rg.POST("/login", fr.FuncsPaciente.LoginPaciente)
 	// Convenio
 	rg.POST("/createConv", fr.FuncsConv.CreateConv)
 	rg.GET("/getConvById/:convId", fr.FuncsConv.FindConvById)

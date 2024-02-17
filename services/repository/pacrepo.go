@@ -30,6 +30,10 @@ func (r *PacRepo) GetPacienteById(id primitive.ObjectID) (models.Paciente, error
 	return r.DB.GetPacienteById(id)
 }
 
+func (r *PacRepo) GetPacienteByEmailSecret(email, secret string) (models.Paciente, error) {
+	return r.DB.GetPacienteByEmailSecret(email, secret)
+}
+
 func (r *PacRepo) GetPacienteByCPF(cpf string) (models.Paciente, error) {
 	return r.DB.GetPacienteByCPF(cpf)
 }

@@ -1,7 +1,9 @@
 package common
 
 import (
+	"crypto/md5"
 	"encoding/json"
+	"fmt"
 	"regexp"
 	"strconv"
 )
@@ -66,4 +68,10 @@ func NrCelValido(cel int64) bool {
 func PrintJSON(input interface{}) string {
 	s, _ := json.MarshalIndent(input, "", "\t")
 	return string(s)
+}
+
+// MD5 hashes using md5 algorithm
+func MD5(text string) string {
+	data := []byte(text)
+	return fmt.Sprintf("%x", md5.Sum(data))
 }

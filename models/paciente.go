@@ -57,7 +57,7 @@ func (p *Paciente) SetSecret(s string) error {
 	if s == "" {
 		return errors.New("\"GetSecret\": Segredo Nulo ou vazio!")
 	} else {
-		p.secret = s
+		p.secret = common.MD5(s)
 		return nil
 	}
 }
