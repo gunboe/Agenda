@@ -173,6 +173,23 @@ func (m *MongoDB) AllowPacienteById(id primitive.ObjectID, b bool) (interface{},
 	}
 }
 
+// Alterar o Secret do Paciente por ID.
+// Se não encontrar um Convênio NÃO retorna erro.
+func (m *MongoDB) ChangePasswordPacienteById(id primitive.ObjectID, s string) (interface{}, error) {
+	// Definir o Banco e a Coleção de Dados
+	Pacientes := m.Client.Database(m.Configuracao.ArmazemDatabase).Collection(colecaoPaciente)
+	// Define o valor a ser atualizado
+	update := bson.M{"$set": bson.M{"secret": s}}
+	var result *mongo.UpdateResult
+	var err error
+	result, err = Pacientes.UpdateByID(ctx, id, update)
+	if err != nil {
+		return nil, err
+	} else {
+		return result, nil
+	}
+}
+
 // Insere um Novo PlanoPgto no Paciente por ID. Se não encontrar um Paciente NÃO retorna erro.
 func (m *MongoDB) InsPlanoPgtoPacienteById(id primitive.ObjectID, plano models.PlanoPgto) (interface{}, error) {
 	// Definir o Banco e a Coleção de Dados

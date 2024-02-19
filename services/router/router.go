@@ -29,6 +29,7 @@ func InitRoutes(rg *gin.RouterGroup, fr *Funcs) {
 	rg.DELETE("/deletePacById/:pacId", fr.FuncsPaciente.DeletePacById)
 	rg.DELETE("/deletePlanoPac/:pacId/planoId/:planoId", fr.FuncsPaciente.DelPlanoPac)
 	rg.POST("/login", fr.FuncsPaciente.LoginPaciente)
+	rg.POST("/changePassword", fr.FuncsPaciente.ChangePassword)
 	// Convenio
 	rg.POST("/createConv", fr.FuncsConv.CreateConv)
 	rg.GET("/getConvById/:convId", fr.FuncsConv.FindConvById)
@@ -40,6 +41,8 @@ func InitRoutes(rg *gin.RouterGroup, fr *Funcs) {
 
 // func InicializaRouter(cF *convControllers.ConvenioFunc) {
 func InitRouter(fDB *Funcs, conf config.Config) error {
+	// Repassa as  configurações
+	fDB.FuncsPaciente.Config = conf
 	// Iniciando o Roteador
 	var r *gin.Engine
 	r = gin.Default()

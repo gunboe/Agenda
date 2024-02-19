@@ -3,6 +3,7 @@ package pacControllers
 import (
 	"Agenda/common"
 	"Agenda/models"
+	"Agenda/services/config"
 	"Agenda/services/logger"
 	"Agenda/services/repository"
 	"errors"
@@ -17,6 +18,7 @@ import (
 type PacienteFunc struct {
 	PacRepo  repository.PacRepo
 	ConvRepo repository.ConvRepo
+	Config   config.Config
 }
 
 // Cria Paciente e salva no armazém ou retorna um erro
@@ -205,6 +207,24 @@ func (pacFunc *PacienteFunc) HabilitePacPorId(id primitive.ObjectID, b bool) err
 				} else {
 					logger.Info("paciente: " + id.Hex() + " Desbloqueado")
 				}
+			} else {
+				logger.Info("Paciente encontrado, mas nada foi alterado")
+			}
+		} else {
+			err = errors.New("Paciente ID: " + id.Hex() + " NÃO encontrado")
+		}
+	}
+	return err
+}
+
+// Altera o Password(secret) de um Paciente por ID
+func (pacFunc *PacienteFunc) ChangePasswordPacPorId(id primitive.ObjectID, s string) error {
+	result, err := pacFunc.PacRepo.ChangePasswordPacienteById(id, s)
+	r := result.(*mongo.UpdateResult)
+	if err == nil {
+		if r.MatchedCount > 0 {
+			if r.ModifiedCount > 0 {
+				logger.Info("Password do paciente: " + id.Hex() + " alterado")
 			} else {
 				logger.Info("Paciente encontrado, mas nada foi alterado")
 			}

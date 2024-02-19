@@ -50,6 +50,10 @@ func (r *PacRepo) AllowPacienteById(id primitive.ObjectID, b bool) (interface{},
 	return r.DB.AllowPacienteById(id, b)
 }
 
+func (r *PacRepo) ChangePasswordPacienteById(id primitive.ObjectID, s string) (interface{}, error) {
+	return r.DB.ChangePasswordPacienteById(id, s)
+}
+
 func (r *PacRepo) InsPlanoPgtoPacienteById(id primitive.ObjectID, plano models.PlanoPgto) (interface{}, error) {
 	return r.DB.InsPlanoPgtoPacienteById(id, plano)
 }

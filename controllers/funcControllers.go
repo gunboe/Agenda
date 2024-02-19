@@ -1,8 +1,8 @@
 package controllers
 
 import (
+	"Agenda/services/logger"
 	"Agenda/services/validation"
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -22,6 +22,12 @@ type PacienteLogin struct {
 	Secret string `bson:"secret,omitempty" json:"secret" binding:"required,min=6,containsany=!@#$%&*_"`
 }
 
+type PacienteSecret struct {
+	Email         string `bson:"email,omitempty" json:"email" binding:"required,email`
+	Secret        string `bson:"secret,omitempty" json:"secret" binding:"required,min=6,containsany=!@#$%&*_"`
+	ConfirmSecret string `bson:"confirmsecret,omitempty" json:"confirmsecret" binding:"required,min=6,containsany=!@#$%&*_"`
+}
+
 //////////////////////////////////
 // Funções de Controller em Geral
 //////////////////////////////////
@@ -36,7 +42,8 @@ func AvaliarRequest(c *gin.Context, obj interface{}) error {
 	if err != nil {
 		// Existindo um erro, ele será enviado para validação do Paciente
 		reqErro := validation.ValidaCamposReq(err)
-		fmt.Println(err)
+		// fmt.Println(err)
+		logger.Error("Erro validação de Json: ", err)
 		c.JSON(reqErro.Code, reqErro)
 	}
 	return err

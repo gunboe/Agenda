@@ -39,6 +39,7 @@ type PacDatabase interface {
 	UpdatePacienteByName(nome string, novoPac models.Paciente, todos bool) (interface{}, error)
 	UpdatePacienteById(id primitive.ObjectID, novoPac models.Paciente) (interface{}, error)
 	AllowPacienteById(id primitive.ObjectID, b bool) (interface{}, error)
+	ChangePasswordPacienteById(id primitive.ObjectID, s string) (interface{}, error)
 	InsPlanoPgtoPacienteById(id primitive.ObjectID, plano models.PlanoPgto) (interface{}, error)
 	DeletePacienteByName(nome string, todos bool) (interface{}, error)
 	DeletePacienteById(id primitive.ObjectID) (interface{}, error)

@@ -9,14 +9,43 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 /////////////////////////////////
 // Routes Control para Pacientes
 /////////////////////////////////
+
+// Alteração do Password(Secret) do Paciente
+func (pacFunc *PacienteFunc) ChangePassword(c *gin.Context) {
+	// Cria o objeto para receber os atributos do Login
+	var pacSecret controllers.PacienteSecret
+	// Avalia os Atributos do Login de Paciente vindos de: "c *gin.Context"
+	if err := controllers.AvaliarRequest(c, &pacSecret); err != nil {
+		return
+	}
+	email := pacSecret.Email
+	secretPac := common.MD5(pacSecret.Secret)
+	// Procura Paciente por email
+	pac, err := pacFunc.GetPacientePorEmailSecret(email, secretPac)
+	if err != nil {
+		reqErro := expandErro.NewForbiddenError("email ou secret incorreto")
+		c.JSON(reqErro.Code, reqErro)
+		return
+	}
+	// Altera o Secret(Password) do Paciente
+	err = pacFunc.ChangePasswordPacPorId(pac.ID, common.MD5(pacSecret.ConfirmSecret))
+	if err != nil {
+		reqErro := expandErro.NewInternalServerError("Erro: alteração do Password(Secret) do Paciente")
+		c.JSON(reqErro.Code, reqErro)
+		return
+	}
+	c.JSON(http.StatusOK, pac)
+}
 
 // Login Paciente
 func (pacFunc *PacienteFunc) LoginPaciente(c *gin.Context) {
@@ -27,13 +56,34 @@ func (pacFunc *PacienteFunc) LoginPaciente(c *gin.Context) {
 		return
 	}
 	email := pacLogin.Email
-	secret := common.MD5(pacLogin.Secret)
-	pac, err := pacFunc.GetPacientePorEmailSecret(email, secret)
+	secretPac := common.MD5(pacLogin.Secret)
+	// Procura Paciente por email
+	pac, err := pacFunc.GetPacientePorEmailSecret(email, secretPac)
 	if err != nil {
 		reqErro := expandErro.NewForbiddenError("email ou secret incorreto")
 		c.JSON(reqErro.Code, reqErro)
 		return
 	}
+	// Geração do Token
+	// Obtem o Secret da configuração
+	secretConf, err := pacFunc.Config.GetSecret()
+	if err != nil {
+		reqErro := expandErro.NewInternalServerError("secret não definida")
+		c.JSON(reqErro.Code, reqErro)
+		return
+	}
+	// Cria os atributos do Token
+	claims := jwt.MapClaims{
+		"id":      pac.ID,
+		"email":   pac.Email,
+		"nome":    pac.Nome,
+		"expData": time.Now().Add(time.Hour * 24).Unix(),
+	}
+	// Gera o Hash do Token
+	t := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	token, err := t.SignedString([]byte(secretConf))
+	// Adicionao Token no Header da Resposta
+	c.Header("Authorization", token)
 	c.JSON(http.StatusOK, pac)
 }
 
