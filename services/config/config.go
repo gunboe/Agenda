@@ -104,6 +104,12 @@ func (conf *Config) CarregaConfig(file string) error {
 	if conf.ArmazemDatabase = sectionConfig.Key("Database").String(); err != nil {
 		return errors.New("Leitura das Configurações: " + err.Error())
 	}
+	if conf.ArmazemUser = sectionConfig.Key("User").String(); err != nil {
+		return errors.New("Leitura das Configurações: " + err.Error())
+	}
+	if conf.ArmazemPassword = sectionConfig.Key("Password").String(); err != nil {
+		return errors.New("Leitura das Configurações: " + err.Error())
+	}
 	if conf.ApiServerPort, err = sectionConfig.Key("ApiServerPort").Int(); err != nil {
 		return errors.New("Leitura das Configurações: " + err.Error())
 	}

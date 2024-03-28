@@ -4,7 +4,6 @@ import (
 	"Agenda/services/config"
 	"context"
 	"fmt"
-	"strconv"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -24,8 +23,10 @@ type MongoDB struct {
 func (m *MongoDB) Connect() error {
 	// lógica de conexão com MongoDB
 	var err error
-	url := "mongodb://" + m.Configuracao.ArmazemHost + ":" + strconv.Itoa(m.Configuracao.ArmazemPort) + "/"
-	clientOptions := options.Client().ApplyURI(url)
+	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
+	// + ":" + strconv.Itoa(m.Configuracao.ArmazemPort)
+	url := "mongodb+srv://" + m.Configuracao.ArmazemUser + ":" + m.Configuracao.ArmazemPassword + "@" + m.Configuracao.ArmazemHost + "/?retryWrites=true&w=majority"
+	clientOptions := options.Client().ApplyURI(url).SetServerAPIOptions(serverAPI)
 	m.Client, err = mongo.Connect(ctx, clientOptions)
 	if err != nil {
 		return err

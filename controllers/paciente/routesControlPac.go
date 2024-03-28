@@ -74,10 +74,10 @@ func (pacFunc *PacienteFunc) LoginPaciente(c *gin.Context) {
 	}
 	// Cria os atributos do Token
 	claims := jwt.MapClaims{
-		"id":      pac.ID,
-		"email":   pac.Email,
-		"nome":    pac.Nome,
-		"expData": time.Now().Add(time.Hour * 24).Unix(),
+		"id":    pac.ID,
+		"email": pac.Email,
+		"nome":  pac.Nome,
+		"exp":   time.Now().Add(time.Hour * 24).Unix(),
 	}
 	// Gera o Hash do Token
 	t := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
