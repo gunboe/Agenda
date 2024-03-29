@@ -1,0 +1,13 @@
+version: 1.0
+runtime: go1
+build:
+  commands:
+    pre-build:
+      - script/prebuild.sh          
+    build:
+      - go build cmd/Agenda/main.go
+run:
+  runtime-version: 1.19
+  command: ./main
+  network:
+    port: 8080 
