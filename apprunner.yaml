@@ -7,7 +7,7 @@ build:
     build:
       - go build cmd/Agenda/main.go
 run:
-  runtime-version: 1.19
+#  runtime-version: 1.19
   command: ./main
   network:
     port: 8080 
